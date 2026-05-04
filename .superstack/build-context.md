@@ -37,7 +37,11 @@ Dodo test checkout
 
 ## Implementation Notes
 
-- Anchor CLI was not available during scaffold setup, so `npm run setup` could not complete yet.
+- Anchor CLI is available in WSL, not Windows PowerShell.
+- WSL toolchain verified: `anchor-cli 0.31.1`, `solana-cli 2.3.13`.
+- `anchor build` succeeds in WSL and generated `anchor/target/deploy/vault.so`, `anchor/target/idl/vault.json`, and `anchor/target/types/vault.ts`.
+- The generated frontend client program ID has been synced to the WSL Anchor keypair program ID: `3hovPciyFvujfzRdo2LgjiRGXyFo6pkpWhXSbnymGuH5`.
+- `npm run codama:js` currently fails from Windows because Codama's ESM config loader does not handle the absolute `D:` path correctly. Use WSL Node later or keep the client synced manually until the app moves to a WSL-native workspace.
 - The Next.js scaffold and npm dependencies were created successfully.
 - Program build/deploy is optional for the first MVP. The first working demo can use wallet-signed devnet USDC transfers before adding PDA policy enforcement.
 

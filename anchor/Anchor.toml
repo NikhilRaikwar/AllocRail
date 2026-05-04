@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-vault = "F4jZpgbtTb6RWNWq6v35fUeiAsRJMrDczVPv9U23yXjB"
+vault = "3hovPciyFvujfzRdo2LgjiRGXyFo6pkpWhXSbnymGuH5"
 
 [registry]
 url = "https://api.apr.dev"
