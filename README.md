@@ -36,6 +36,19 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Receipt page linking the Dodo event ID to Solana transaction signatures.
 - Optional Anchor PDA treasury vault for policy-enforced payouts.
 
+## Current API Foundation
+
+Milestone 1 adds the first API surface:
+
+```text
+GET /api/health
+GET /api/allocrail/demo
+```
+
+`/api/health` reports non-secret environment readiness for Dodo and Solana configuration.
+
+`/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
+
 ## Stack
 
 | Layer | Technology |

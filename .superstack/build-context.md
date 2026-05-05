@@ -47,9 +47,30 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Replace template homepage with AllocRail demo UI.
-2. Add Dodo checkout creation API route.
-3. Add Dodo webhook verification route with idempotency.
-4. Add allocation rule and payout intent models.
-5. Add Solana devnet USDC transfer helper.
-6. Add receipt page with Dodo event and Solana explorer links.
+1. Add Dodo checkout creation API route.
+2. Add Dodo webhook verification route with idempotency.
+3. Add Solana devnet USDC transfer helper.
+4. Add receipt page with Dodo event and Solana explorer links.
+
+## Build Status
+
+Completed milestones:
+
+- Milestone 1: app/API foundation.
+  - Added environment validation.
+  - Added `/api/health`.
+  - Added typed allocation, Dodo routing metadata, revenue event, payout intent, and receipt models.
+  - Added demo allocation rule and demo receipt API at `/api/allocrail/demo`.
+  - Added strict Dodo routing metadata parser for later webhook validation.
+
+Current verification:
+
+- `npm run build`: passing.
+- `npm run lint`: passing with pre-existing scaffold warnings in wallet/vault components.
+
+Pipeline handoff:
+
+- `pipeline.ingestion_method`: webhook
+- `pipeline.data_types`: Dodo payment/subscription/credit events and Solana token transfer receipts
+- `pipeline.storage`: in-memory demo for Milestone 1; Postgres planned after webhook path
+- `pipeline.backfill_implemented`: false
