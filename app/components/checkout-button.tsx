@@ -7,6 +7,15 @@ type CheckoutButtonProps = {
   metadata: DodoRoutingMetadata;
   email: string;
   name: string;
+  label?: string;
+  className?: string;
+  buttonClassName?: string;
+  sessionClassName?: string;
+  statusClassName?: string;
+  errorClassName?: string;
+  onSessionCreated?: (sessionId: string) => void;
+  onRedirect?: (checkoutUrl: string) => void;
+  onError?: (message: string) => void;
 };
 
 type CheckoutResponse = {
@@ -19,6 +28,15 @@ export function CheckoutButton({
   metadata,
   email,
   name,
+  label = "Start Dodo checkout",
+  className,
+  buttonClassName,
+  sessionClassName,
+  statusClassName,
+  errorClassName,
+  onSessionCreated,
+  onRedirect,
+  onError,
 }: CheckoutButtonProps) {
   const [status, setStatus] = useState<
     "idle" | "loading" | "redirecting" | "error"
@@ -50,41 +68,66 @@ export function CheckoutButton({
       }
 
       setSessionId(data.sessionId ?? null);
+      if (data.sessionId) {
+        onSessionCreated?.(data.sessionId);
+      }
       setStatus("redirecting");
+      onRedirect?.(data.checkoutUrl);
       await new Promise((resolve) => setTimeout(resolve, 900));
       window.location.href = data.checkoutUrl;
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Checkout failed.";
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Checkout failed.");
+      setError(message);
+      onError?.(message);
     }
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={className ?? "flex flex-col gap-3"}>
       <button
         type="button"
         onClick={startCheckout}
         disabled={status === "loading" || status === "redirecting"}
-        className="w-fit rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className={
+          buttonClassName ??
+          "inline-flex h-12 w-fit items-center justify-center rounded-full bg-[linear-gradient(135deg,#8b5cf6,#6d5dfc)] px-6 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(109,93,252,0.32)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        }
       >
         {status === "loading"
           ? "Creating checkout..."
           : status === "redirecting"
             ? "Redirecting to Dodo..."
-            : "Start Dodo checkout"}
+            : label}
       </button>
       {sessionId ? (
-        <p className="max-w-xl font-mono text-xs leading-6 text-foreground/55">
+        <p
+          className={
+            sessionClassName ??
+            "max-w-xl font-mono text-xs leading-6 text-foreground/55"
+          }
+        >
           Session created: {sessionId}
         </p>
       ) : null}
       {status === "redirecting" ? (
-        <p className="max-w-xl text-sm leading-6 text-foreground/60">
+        <p
+          className={
+            statusClassName ?? "max-w-xl text-sm leading-6 text-foreground/60"
+          }
+        >
           Dodo checkout is ready. Redirecting now.
         </p>
       ) : null}
       {status === "error" && error ? (
-        <p className="max-w-xl text-sm leading-6 text-destructive">{error}</p>
+        <p
+          className={
+            errorClassName ?? "max-w-xl text-sm leading-6 text-destructive"
+          }
+        >
+          {error}
+        </p>
       ) : null}
     </div>
   );

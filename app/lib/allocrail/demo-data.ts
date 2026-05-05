@@ -54,9 +54,10 @@ export const demoRevenueEvent: RevenueEvent = {
   id: "rev_demo_001",
   dodoEventId: "evt_dodo_demo_001",
   dodoPaymentId: "pay_dodo_demo_001",
+  checkoutSessionId: "cks_dodo_demo_001",
   type: "payment.succeeded",
-  amountCents: 10_000,
-  currency: "USD",
+  amountCents: 11_13_762,
+  currency: "INR",
   receivedAt: new Date("2026-05-05T00:00:00.000Z").toISOString(),
   metadata: {
     workspace_id: DEMO_WORKSPACE_ID,
