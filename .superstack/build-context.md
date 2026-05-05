@@ -47,7 +47,7 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Add Dodo checkout creation API route.
+1. Verify Dodo checkout route against real test-mode product.
 2. Add Dodo webhook verification route with idempotency.
 3. Add Solana devnet USDC transfer helper.
 4. Add receipt page with Dodo event and Solana explorer links.
@@ -74,3 +74,16 @@ Pipeline handoff:
 - `pipeline.data_types`: Dodo payment/subscription/credit events and Solana token transfer receipts
 - `pipeline.storage`: in-memory demo for Milestone 1; Postgres planned after webhook path
 - `pipeline.backfill_implemented`: false
+
+- Milestone 2: Dodo checkout foundation.
+  - Added official `dodopayments` SDK dependency.
+  - Added Dodo checkout client wrapper using test/live environment config.
+  - Added `POST /api/dodo/checkout` to create real checkout sessions with AllocRail routing metadata.
+  - Added `GET /api/dodo/checkout` for non-secret readiness inspection.
+  - Added `/checkout/success` return page.
+  - Verified against Dodo test mode with a real checkout session returned from the configured product.
+
+Current Dodo checkout verification:
+
+- `GET /api/dodo/checkout`: ready.
+- `POST /api/dodo/checkout`: returned a Dodo test checkout URL.

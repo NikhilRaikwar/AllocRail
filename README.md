@@ -43,11 +43,22 @@ Milestone 1 adds the first API surface:
 ```text
 GET /api/health
 GET /api/allocrail/demo
+GET /api/dodo/checkout
+POST /api/dodo/checkout
 ```
 
 `/api/health` reports non-secret environment readiness for Dodo and Solana configuration.
 
 `/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
+
+`/api/dodo/checkout` creates a Dodo checkout session in test mode with AllocRail metadata:
+
+```text
+workspace_id
+merchant_id
+rule_id
+product_tag
+```
 
 ## Stack
 

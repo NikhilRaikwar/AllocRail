@@ -1,10 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
+import { CheckoutButton } from "./components/checkout-button";
 import { ClusterSelect } from "./components/cluster-select";
 import { GridBackground } from "./components/grid-background";
 import { ThemeToggle } from "./components/theme-toggle";
 import { WalletButton } from "./components/wallet-button";
+import {
+  DEMO_MERCHANT_ID,
+  DEMO_RULE_ID,
+  DEMO_WORKSPACE_ID,
+  demoAllocationRule,
+} from "./lib/allocrail/demo-data";
 
 const flow = [
   "Dodo checkout",
@@ -22,7 +30,17 @@ const buckets = [
   { label: "Agent budget", value: "10%" },
 ];
 
+const checkoutMetadata = {
+  workspace_id: DEMO_WORKSPACE_ID,
+  merchant_id: DEMO_MERCHANT_ID,
+  rule_id: DEMO_RULE_ID,
+  product_tag: demoAllocationRule.productTag,
+};
+
 export default function Home() {
+  const [demoName, setDemoName] = useState("AllocRail Demo Customer");
+  const [demoEmail, setDemoEmail] = useState("founder-demo@allocrail.dev");
+
   return (
     <div className="relative min-h-screen bg-background text-foreground">
       <GridBackground />
@@ -120,6 +138,79 @@ export default function Home() {
                 <p className="mt-3 text-sm font-semibold leading-5">{step}</p>
               </div>
             ))}
+          </section>
+
+          <section className="mt-12 grid gap-8 border-t border-border-low pt-10 md:grid-cols-[0.9fr_1.1fr] md:items-start">
+            <div>
+              <p className="text-sm font-medium text-foreground/55">
+                Live checkout path
+              </p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">
+                Trigger a Dodo test checkout with routing metadata.
+              </h2>
+              <p className="mt-4 text-sm leading-6 text-foreground/60">
+                The checkout session carries the workspace, merchant, rule, and
+                product tag that AllocRail will use when the verified webhook
+                arrives.
+              </p>
+              <div className="mt-6 grid max-w-xl gap-4 sm:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-foreground/45">
+                    Demo customer name
+                  </span>
+                  <input
+                    type="text"
+                    value={demoName}
+                    onChange={(event) => setDemoName(event.target.value)}
+                    className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-foreground/45">
+                    Demo customer email
+                  </span>
+                  <input
+                    type="email"
+                    value={demoEmail}
+                    onChange={(event) => setDemoEmail(event.target.value)}
+                    className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring"
+                  />
+                </label>
+              </div>
+              <div className="mt-6">
+                <CheckoutButton
+                  metadata={checkoutMetadata}
+                  email={demoEmail}
+                  name={demoName}
+                />
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-border-low bg-card">
+              <div className="border-b border-border-low px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground/45">
+                  Dodo checkout metadata
+                </p>
+                <p className="mt-1 text-sm text-foreground/65">
+                  Attached server-side when the checkout session is created.
+                </p>
+              </div>
+              <dl className="divide-y divide-border-low">
+                {Object.entries(checkoutMetadata).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="grid gap-2 px-5 py-4 md:grid-cols-[0.42fr_0.58fr]"
+                  >
+                    <dt className="font-mono text-xs text-foreground/45">
+                      {key}
+                    </dt>
+                    <dd className="break-all font-mono text-sm text-foreground/75">
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </section>
 
           <section className="mt-12 grid gap-6 md:grid-cols-3">
