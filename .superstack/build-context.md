@@ -87,3 +87,11 @@ Current Dodo checkout verification:
 
 - `GET /api/dodo/checkout`: ready.
 - `POST /api/dodo/checkout`: returned a Dodo test checkout URL.
+
+- Milestone 3: verified webhook routing.
+  - Added verified `POST /api/dodo/webhook` using the official Dodo webhook signature verifier.
+  - Added replay-window checks and idempotency via `webhook-id`.
+  - Added in-memory revenue event inbox.
+  - Added allocation rule resolution, payout intent generation, and receipt creation on webhook receive.
+  - Added `/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` for pipeline inspection.
+  - Verified a real `payment.succeeded` webhook from Dodo against the public Cloudflare route and stored the routed event locally.

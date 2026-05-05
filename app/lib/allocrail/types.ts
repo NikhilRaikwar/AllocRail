@@ -34,7 +34,7 @@ export type AllocationRule = {
   productTag: string;
   currency: "USDC";
   buckets: AllocationBucket[];
-  dailyLimitUsdCents: number;
+  dailyLimitCents: number;
   enabled: boolean;
 };
 
@@ -48,10 +48,12 @@ export type DodoRoutingMetadata = {
 export type RevenueEvent = {
   id: string;
   dodoEventId: string;
-  dodoPaymentId: string;
+  dodoPaymentId?: string;
+  dodoSubscriptionId?: string;
+  checkoutSessionId?: string;
   type: RevenueEventType;
-  amountUsdCents: number;
-  currency: "USD";
+  amountCents: number;
+  currency: string;
   metadata: DodoRoutingMetadata;
   receivedAt: string;
 };
@@ -61,7 +63,8 @@ export type PayoutIntent = {
   revenueEventId: string;
   bucketKind: AllocationBucketKind;
   recipientWallet: string;
-  amountUsdcCents: number;
+  amountCents: number;
+  currency: "USDC";
   status: PayoutIntentStatus;
   solanaSignature?: string;
 };

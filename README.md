@@ -43,13 +43,20 @@ Milestone 1 adds the first API surface:
 ```text
 GET /api/health
 GET /api/allocrail/demo
+GET /api/allocrail/events
+GET /api/allocrail/payout-intents
+GET /api/allocrail/receipts
 GET /api/dodo/checkout
 POST /api/dodo/checkout
+GET /api/dodo/webhook
+POST /api/dodo/webhook
 ```
 
 `/api/health` reports non-secret environment readiness for Dodo and Solana configuration.
 
 `/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
+
+`/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current in-memory routing pipeline state after verified webhooks are processed.
 
 `/api/dodo/checkout` creates a Dodo checkout session in test mode with AllocRail metadata:
 

@@ -16,7 +16,7 @@ export const demoAllocationRule: AllocationRule = {
   name: "AI SaaS revenue split",
   productTag: "ai-pro-subscription",
   currency: "USDC",
-  dailyLimitUsdCents: 25_000_00,
+  dailyLimitCents: 25_000_00,
   enabled: true,
   buckets: [
     {
@@ -55,7 +55,7 @@ export const demoRevenueEvent: RevenueEvent = {
   dodoEventId: "evt_dodo_demo_001",
   dodoPaymentId: "pay_dodo_demo_001",
   type: "payment.succeeded",
-  amountUsdCents: 10_000,
+  amountCents: 10_000,
   currency: "USD",
   receivedAt: new Date("2026-05-05T00:00:00.000Z").toISOString(),
   metadata: {
@@ -75,9 +75,10 @@ export function createDemoPayoutIntents(
     revenueEventId: event.id,
     bucketKind: bucket.kind,
     recipientWallet: bucket.recipientWallet,
-    amountUsdcCents: Math.floor(
-      (event.amountUsdCents * bucket.percentageBps) / 10_000
+    amountCents: Math.floor(
+      (event.amountCents * bucket.percentageBps) / 10_000
     ),
+    currency: "USDC",
     status: bucket.requiresApproval ? "pending_approval" : "draft",
   }));
 }
