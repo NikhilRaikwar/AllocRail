@@ -50,3 +50,7 @@ next-env.d.ts
 
 # solana local validator
 test-ledger/
+
+# local planning / codex artifacts
+/.artifacts/
+/docs/ALLOC_RAIL_10_10_WINNER_PLAN.md

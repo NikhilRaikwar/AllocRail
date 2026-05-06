@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Verify Dodo checkout route against real test-mode product.
-2. Add Dodo webhook verification route with idempotency.
-3. Add Solana devnet USDC transfer helper.
-4. Add receipt page with Dodo event and Solana explorer links.
+1. Execute real Solana devnet USDC settlement from payout intents.
+2. Add approval controls and payout-intent lifecycle transitions.
+3. Persist webhook, payout, and receipt state beyond process memory.
+4. Expand Dodo semantic handling for subscriptions, credits, and refunds.
 
 ## Build Status
 
@@ -95,3 +95,22 @@ Current Dodo checkout verification:
   - Added allocation rule resolution, payout intent generation, and receipt creation on webhook receive.
   - Added `/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` for pipeline inspection.
   - Verified a real `payment.succeeded` webhook from Dodo against the public Cloudflare route and stored the routed event locally.
+
+- Milestone 4: founder dashboard.
+  - Added dashboard routes for overview, events, payout intents, receipts, and allocation rules.
+  - Added a founder-facing dashboard shell with real theme, cluster, wallet, and demo checkout controls.
+  - Removed fake dashboard fallback data so pages show real in-memory webhook/store state or explicit empty states.
+  - Added responsive receipts rendering and wired the dashboard success flow back to `/dashboard`.
+  - Added CSV export for stored revenue events via `/api/allocrail/events?format=csv`.
+
+Current dashboard verification:
+
+- `npm run build`: passing.
+- Theme toggle, cluster selector, and wallet UI remain mounted in the dashboard shell.
+- Dashboard sidebar demo checkout launches a real Dodo test checkout session.
+- Revenue events CSV export is wired to live stored event data.
+
+Current known constraints:
+
+- Dashboard state is still in-memory and resets on server restart.
+- Solana payout execution and tx-signature linkage are not complete yet; these belong to Milestone 5.

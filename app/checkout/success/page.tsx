@@ -15,7 +15,7 @@ export default function CheckoutSuccessPage() {
         and settles the route with Solana devnet USDC.
       </p>
       <Link
-        href="/"
+        href="/dashboard"
         className="mt-8 w-fit rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
       >
         Back to dashboard

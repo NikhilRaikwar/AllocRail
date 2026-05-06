@@ -2,13 +2,25 @@
 
 **Dodo revenue -> programmable Solana treasury in one webhook.**
 
-AllocRail is a programmable treasury router for SaaS and AI founders using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, and verified payment events. AllocRail turns those revenue events into Solana devnet USDC payout intents for contractors, tax reserves, founder distributions, and AI-agent budgets.
+AllocRail is a founder-facing treasury router for SaaS and AI businesses using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, and verified payment events. AllocRail turns those verified revenue events into payout intents, receipts, and dashboard-visible Solana treasury routes for contractors, tax reserves, founder distributions, and AI-agent budgets.
 
 ## Core Flow
 
 ```text
 Dodo checkout -> verified webhook -> allocation rule -> payout intents -> Solana devnet USDC transfers -> receipt
 ```
+
+## Current Product Surface
+
+Milestone 4 adds a founder dashboard with real pipeline visibility:
+
+- `/dashboard`
+- `/dashboard/events`
+- `/dashboard/payout-intents`
+- `/dashboard/receipts`
+- `/dashboard/rules`
+
+The dashboard reads live in-memory webhook/store state only. If no verified webhook data exists yet, it shows empty states instead of demo records.
 
 ## Who It Is For
 
@@ -32,13 +44,12 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Dodo checkout session creation with metadata for workspace, product, and allocation rule routing.
 - Verified Dodo webhook handler with idempotency.
 - Allocation rules for contractor payout, tax reserve, founder share, and AI-agent budget buckets.
-- Solana devnet USDC multi-recipient payouts.
-- Receipt page linking the Dodo event ID to Solana transaction signatures.
+- Founder dashboard for revenue events, payout intents, receipts, and allocation rules.
+- Solana devnet USDC multi-recipient payout path for Milestone 5.
+- Receipt page linking Dodo event IDs to settlement state and later Solana transaction signatures.
 - Optional Anchor PDA treasury vault for policy-enforced payouts.
 
-## Current API Foundation
-
-Milestone 1 adds the first API surface:
+## Current API Surface
 
 ```text
 GET /api/health
@@ -58,6 +69,8 @@ POST /api/dodo/webhook
 
 `/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current in-memory routing pipeline state after verified webhooks are processed.
 
+`/api/allocrail/events?format=csv` exports the stored revenue events as CSV for dashboard download.
+
 `/api/dodo/checkout` creates a Dodo checkout session in test mode with AllocRail metadata:
 
 ```text
@@ -67,6 +80,19 @@ rule_id
 product_tag
 ```
 
+## Milestone Status
+
+- Milestone 1: API foundation
+- Milestone 2: live Dodo checkout flow
+- Milestone 3: verified webhook routing pipeline
+- Milestone 4: founder dashboard
+
+Next:
+
+- Milestone 5: Solana devnet USDC settlement proof
+- Milestone 6: approval controls and safety guardrails
+- Milestone 7: deeper Dodo semantic integration
+
 ## Stack
 
 | Layer | Technology |
@@ -75,7 +101,7 @@ product_tag
 | Solana client | `@solana/kit`, wallet-standard |
 | Program | Anchor scaffold, planned PDA treasury vault |
 | Payments | Dodo Payments checkout, metadata, webhooks |
-| Data | Prisma/Postgres planned for MVP |
+| Data | In-memory event store today, durable storage planned next |
 | Devnet token | Solana devnet USDC |
 
 Devnet USDC mint:
@@ -111,6 +137,8 @@ http://localhost:3000
 ```
 
 Anchor setup requires the Anchor CLI. The scaffold includes an Anchor workspace under `anchor/`, but program build/deploy is optional for the first Dodo-to-devnet-USDC MVP.
+
+The current dashboard and webhook pipeline store data in memory. Restarting the Next.js server clears events, payout intents, and receipts until durable persistence is added.
 
 ## Agentic Engineering Context
 
