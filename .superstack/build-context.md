@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Execute real Solana devnet USDC settlement from payout intents.
-2. Add approval controls and payout-intent lifecycle transitions.
-3. Persist webhook, payout, and receipt state beyond process memory.
-4. Expand Dodo semantic handling for subscriptions, credits, and refunds.
+1. Add founder rule create/edit flows for allocation buckets and recipient wallets.
+2. Add stricter approval controls, approver identity capture, and audit guardrails.
+3. Expand Dodo semantic handling for subscriptions, credits, and refunds.
+4. Tighten workspace ownership and membership around authenticated founders.
 
 ## Build Status
 
@@ -112,5 +112,17 @@ Current dashboard verification:
 
 Current known constraints:
 
-- Dashboard state is still in-memory and resets on server restart.
-- Solana payout execution and tx-signature linkage are not complete yet; these belong to Milestone 5.
+- Milestone 5: Solana devnet settlement with durable persistence.
+  - Added server-side Solana devnet USDC settlement execution from payout intents.
+  - Added payout-intent lifecycle transitions for `pending_approval`, `approved`, `submitted`, `confirmed`, and `failed`.
+  - Added `POST /api/allocrail/payout-intents/[id]/approve` and `POST /api/allocrail/payout-intents/[id]/execute`.
+  - Added Supabase persistence for allocation rules, webhook idempotency, revenue events, payout intents, and receipts.
+  - Added schema migration at `supabase/migrations/20260507_allocrail_milestone_5.sql`.
+  - Updated dashboard and CSV export paths to read durable state from Supabase.
+  - Added Supabase auth pages and dashboard protection for founder access.
+  - Verified persisted payout intents, receipts, and confirmed Solana devnet USDC transfers with explorer-linked proof.
+
+Current known constraints:
+
+- Workspace membership and founder-managed rule editing are still not implemented; wallet connect remains a treasury utility only.
+- Allocation rules are persisted and resolved from Supabase, but founder create/edit flows in the UI still belong to the next milestone.

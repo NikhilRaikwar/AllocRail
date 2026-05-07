@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (hasSeenWebhook(webhookId)) {
+    if (await hasSeenWebhook(webhookId)) {
       return NextResponse.json({
         ok: true,
         duplicate: true,
@@ -106,10 +106,10 @@ export async function POST(req: NextRequest) {
     }
 
     const revenueEvent = toRevenueEvent(webhookId, payload);
-    const allocationRule = resolveAllocationRule(revenueEvent);
+    const allocationRule = await resolveAllocationRule(revenueEvent);
     const payoutIntents = createPayoutIntents(revenueEvent, allocationRule);
     const receipt = createReceipt(revenueEvent, allocationRule, payoutIntents);
-    recordWebhookEvent(webhookId, revenueEvent, payoutIntents, receipt);
+    await recordWebhookEvent(webhookId, revenueEvent, payoutIntents, receipt);
 
     return NextResponse.json({
       ok: true,

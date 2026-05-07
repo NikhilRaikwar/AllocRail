@@ -9,6 +9,7 @@ export type AppEnvironment = {
   hasDodoApiKey: boolean;
   hasDodoWebhookSecret: boolean;
   hasTreasurySigner: boolean;
+  hasSupabase: boolean;
   allocRailProgramId?: string;
 };
 
@@ -55,6 +56,10 @@ export function getAppEnvironment(): AppEnvironment {
     hasDodoApiKey: Boolean(process.env.DODO_PAYMENTS_API_KEY),
     hasDodoWebhookSecret: Boolean(readDodoWebhookSecret()),
     hasTreasurySigner: Boolean(process.env.TREASURY_SIGNER_SECRET_KEY),
+    hasSupabase: Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    ),
     allocRailProgramId: process.env.ALLOC_RAIL_PROGRAM_ID,
   };
 }
@@ -68,6 +73,10 @@ export function checkEnvironment(): EnvironmentCheck {
     missing.push("DODO_PAYMENTS_WEBHOOK_SECRET");
   }
   if (!config.hasTreasurySigner) missing.push("TREASURY_SIGNER_SECRET_KEY");
+  if (!config.hasSupabase) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL");
+    missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
 
   return {
     ok: missing.length === 0,

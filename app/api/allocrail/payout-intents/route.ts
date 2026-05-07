@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { listRecentPayoutIntents } from "@/app/lib/allocrail/event-store";
 
-export function GET() {
-  const payoutIntents = listRecentPayoutIntents();
+export async function GET() {
+  const payoutIntents = await listRecentPayoutIntents();
 
   return NextResponse.json({
     count: payoutIntents.length,

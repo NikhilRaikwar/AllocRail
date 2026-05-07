@@ -15,7 +15,8 @@ export type PayoutIntentStatus =
   | "draft"
   | "pending_approval"
   | "approved"
-  | "paid"
+  | "submitted"
+  | "confirmed"
   | "failed";
 
 export type AllocationBucket = {
@@ -65,8 +66,15 @@ export type PayoutIntent = {
   recipientWallet: string;
   amountCents: number;
   currency: "USDC";
+  requiresApproval: boolean;
   status: PayoutIntentStatus;
+  solanaCluster?: string;
   solanaSignature?: string;
+  explorerUrl?: string;
+  submittedAt?: string;
+  confirmedAt?: string;
+  failedAt?: string;
+  failureReason?: string;
 };
 
 export type AllocRailReceipt = {

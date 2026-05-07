@@ -11,6 +11,8 @@ import { ThemeToggle } from "@/app/components/theme-toggle";
 import { ClusterSelect } from "@/app/components/cluster-select";
 import { WalletButton } from "@/app/components/wallet-button";
 import { CheckoutButton } from "@/app/components/checkout-button";
+import { AuthStatus } from "@/app/components/auth/auth-status";
+import { SignOutButton } from "@/app/components/auth/sign-out-button";
 import { demoAllocationRule } from "@/app/lib/allocrail/demo-data";
 import styles from "@/app/dashboard/dashboard.module.css";
 
@@ -70,6 +72,10 @@ export function DashboardShell({ title, children }: DashboardShellProps) {
         <div className={styles.navSep} />
         <span className={styles.navPageTitle}>Founder Dashboard</span>
         <div className={styles.navRight}>
+          <div className={styles.authWrap}>
+            <AuthStatus />
+            <SignOutButton />
+          </div>
           <div className={`${styles.controlWrap} ${styles.themeWrap}`}>
             <ThemeToggle />
           </div>

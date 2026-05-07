@@ -12,7 +12,7 @@ Dodo checkout -> verified webhook -> allocation rule -> payout intents -> Solana
 
 ## Current Product Surface
 
-Milestone 4 adds a founder dashboard with real pipeline visibility:
+AllocRail now includes a founder dashboard with real pipeline visibility:
 
 - `/dashboard`
 - `/dashboard/events`
@@ -20,7 +20,7 @@ Milestone 4 adds a founder dashboard with real pipeline visibility:
 - `/dashboard/receipts`
 - `/dashboard/rules`
 
-The dashboard reads live in-memory webhook/store state only. If no verified webhook data exists yet, it shows empty states instead of demo records.
+The dashboard reads persisted routing state from Supabase when configured. If Supabase is not configured yet, the app falls back to process memory for local development only.
 
 ## Who It Is For
 
@@ -46,7 +46,8 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Allocation rules for contractor payout, tax reserve, founder share, and AI-agent budget buckets.
 - Founder dashboard for revenue events, payout intents, receipts, and allocation rules.
 - Solana devnet USDC multi-recipient payout path for Milestone 5.
-- Receipt page linking Dodo event IDs to settlement state and later Solana transaction signatures.
+- Supabase-backed storage for webhook idempotency, revenue events, payout intents, receipts, and allocation rules.
+- Receipt page linking Dodo event IDs to settlement state and real Solana transaction signatures.
 - Optional Anchor PDA treasury vault for policy-enforced payouts.
 
 ## Current API Surface
@@ -67,7 +68,7 @@ POST /api/dodo/webhook
 
 `/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
 
-`/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current in-memory routing pipeline state after verified webhooks are processed.
+`/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current routing pipeline state after verified webhooks are processed.
 
 `/api/allocrail/events?format=csv` exports the stored revenue events as CSV for dashboard download.
 
@@ -86,10 +87,10 @@ product_tag
 - Milestone 2: live Dodo checkout flow
 - Milestone 3: verified webhook routing pipeline
 - Milestone 4: founder dashboard
+- Milestone 5: Solana devnet USDC settlement proof with durable Supabase persistence and founder auth
 
 Next:
 
-- Milestone 5: Solana devnet USDC settlement proof
 - Milestone 6: approval controls and safety guardrails
 - Milestone 7: deeper Dodo semantic integration
 
@@ -101,7 +102,7 @@ Next:
 | Solana client | `@solana/kit`, wallet-standard |
 | Program | Anchor scaffold, planned PDA treasury vault |
 | Payments | Dodo Payments checkout, metadata, webhooks |
-| Data | In-memory event store today, durable storage planned next |
+| Data | Supabase Postgres for rules, events, payout intents, receipts, and webhook idempotency |
 | Devnet token | Solana devnet USDC |
 
 Devnet USDC mint:
@@ -124,6 +125,20 @@ Create local environment variables:
 cp .env.example .env
 ```
 
+Required Supabase variables:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+Apply the Milestone 5 schema in your Supabase project:
+
+```text
+supabase/migrations/20260507_allocrail_milestone_5.sql
+```
+
 Start the app:
 
 ```bash
@@ -138,7 +153,7 @@ http://localhost:3000
 
 Anchor setup requires the Anchor CLI. The scaffold includes an Anchor workspace under `anchor/`, but program build/deploy is optional for the first Dodo-to-devnet-USDC MVP.
 
-The current dashboard and webhook pipeline store data in memory. Restarting the Next.js server clears events, payout intents, and receipts until durable persistence is added.
+When Supabase is configured, events, payout intents, receipts, rules, and webhook idempotency survive server restarts. Without Supabase, the app falls back to in-memory storage and should be treated as local-only.
 
 ## Agentic Engineering Context
 

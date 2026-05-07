@@ -7,8 +7,8 @@ import {
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
 
-export default function DashboardOverviewPage() {
-  const snapshot = getDashboardSnapshot();
+export default async function DashboardOverviewPage() {
+  const snapshot = await getDashboardSnapshot();
   const latestEvent = snapshot.latestEvent;
   const latestReceipt = snapshot.latestReceipt;
   const allocationRule = snapshot.allocationRule;
@@ -23,30 +23,41 @@ export default function DashboardOverviewPage() {
           </h1>
         </div>
         <div className={styles.pageActions}>
-          <button className={styles.secondaryButton}>Refresh</button>
-          <button className={styles.primaryButton}>Dodo Checkout</button>
+          <a href="/dashboard/events" className={styles.secondaryButton}>
+            Events
+          </a>
+          <a href="/dashboard/payout-intents" className={styles.primaryButton}>
+            Settlement Queue
+          </a>
         </div>
       </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span className={styles.statLabelDot} style={{ background: "var(--green)" }} />
+            <span
+              className={styles.statLabelDot}
+              style={{ background: "var(--green)" }}
+            />
             Revenue Processed
           </div>
           <div className={styles.statValue} style={{ color: "var(--green)" }}>
             {latestEvent
-              ? formatMoney(snapshot.metrics.latestAmountCents, snapshot.metrics.latestCurrency)
+              ? formatMoney(
+                  snapshot.metrics.latestAmountCents,
+                  snapshot.metrics.latestCurrency
+                )
               : "Rs 0.00"}
           </div>
-          <div className={styles.statSub}>
-            {snapshot.metrics.eventCount} events
-          </div>
+          <div className={styles.statSub}>{snapshot.metrics.eventCount} events</div>
         </div>
 
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span className={styles.statLabelDot} style={{ background: "var(--amber)" }} />
+            <span
+              className={styles.statLabelDot}
+              style={{ background: "var(--amber)" }}
+            />
             Pending Intents
           </div>
           <div className={styles.statValue} style={{ color: "var(--amber)" }}>
@@ -59,7 +70,10 @@ export default function DashboardOverviewPage() {
 
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span className={styles.statLabelDot} style={{ background: "var(--blue)" }} />
+            <span
+              className={styles.statLabelDot}
+              style={{ background: "var(--blue)" }}
+            />
             Webhook Status
           </div>
           <div className={styles.statValue} style={{ color: "var(--blue)" }}>
@@ -70,7 +84,10 @@ export default function DashboardOverviewPage() {
 
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span className={styles.statLabelDot} style={{ background: "var(--purple)" }} />
+            <span
+              className={styles.statLabelDot}
+              style={{ background: "var(--purple)" }}
+            />
             Receipts Generated
           </div>
           <div className={styles.statValue} style={{ color: "var(--purple)" }}>
@@ -100,21 +117,47 @@ export default function DashboardOverviewPage() {
               {latestEvent && allocationRule ? (
                 <>
                   <div className={styles.overviewGrid}>
-                    <InfoBlock label="Payment ID" value={latestEvent.dodoPaymentId} />
-                    <InfoBlock label="Checkout Session" value={latestEvent.checkoutSessionId} />
+                    <InfoBlock
+                      label="Payment ID"
+                      value={latestEvent.dodoPaymentId}
+                    />
+                    <InfoBlock
+                      label="Checkout Session"
+                      value={latestEvent.checkoutSessionId}
+                    />
                     <div>
                       <div className={styles.miniLabel}>Amount</div>
-                      <div className={styles.statValue} style={{ fontSize: 20, marginBottom: 0, color: "var(--green)" }}>
-                        {formatMoney(latestEvent.amountCents, latestEvent.currency)}
+                      <div
+                        className={styles.statValue}
+                        style={{
+                          fontSize: 20,
+                          marginBottom: 0,
+                          color: "var(--green)",
+                        }}
+                      >
+                        {formatMoney(
+                          latestEvent.amountCents,
+                          latestEvent.currency
+                        )}
                       </div>
                     </div>
                     <InfoBlock label="Rule Used" value={allocationRule.id} />
-                    <InfoBlock label="Received At" value={formatTimestamp(latestEvent.receivedAt)} />
+                    <InfoBlock
+                      label="Received At"
+                      value={formatTimestamp(latestEvent.receivedAt)}
+                    />
                     <div>
                       <div className={styles.miniLabel}>Webhook Status</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span className={styles.pip} style={{ width: 6, height: 6 }} />
-                        <span className={`${styles.tag} ${styles.tagGreen}`}>verified</span>
+                      <div
+                        style={{ display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        <span
+                          className={styles.pip}
+                          style={{ width: 6, height: 6 }}
+                        />
+                        <span className={`${styles.tag} ${styles.tagGreen}`}>
+                          verified
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -124,10 +167,7 @@ export default function DashboardOverviewPage() {
                       Allocation Breakdown
                     </div>
                     {snapshot.bucketSummaries.map((bucket) => {
-                      const percent =
-                        latestEvent.amountCents > 0
-                          ? Math.round((bucket.amountCents / latestEvent.amountCents) * 100)
-                          : 0;
+                      const percent = Math.round(bucket.percentageBps / 100);
                       const colorMap: Record<string, string> = {
                         contractor_escrow: "var(--green)",
                         tax_reserve: "var(--amber)",
@@ -151,10 +191,15 @@ export default function DashboardOverviewPage() {
                         <div className={styles.allocSection} key={bucket.kind}>
                           <div className={styles.allocRowHeader}>
                             <div className={styles.allocNameRow}>
-                              <span className={`${styles.intentDot} ${dotClassMap[bucket.kind]}`} />
+                              <span
+                                className={`${styles.intentDot} ${dotClassMap[bucket.kind]}`}
+                              />
                               <div className={styles.allocName}>{bucket.label}</div>
                             </div>
-                            <span className={styles.allocPct} style={{ color: colorMap[bucket.kind] }}>
+                            <span
+                              className={styles.allocPct}
+                              style={{ color: colorMap[bucket.kind] }}
+                            >
                               {percent}% · {formatMoney(bucket.amountCents, "USDC")}
                             </span>
                           </div>
@@ -171,7 +216,8 @@ export default function DashboardOverviewPage() {
                 </>
               ) : (
                 <div className={styles.emptyState}>
-                  No real revenue event yet. Complete a Dodo checkout and replay the webhook.
+                  No real revenue event yet. Complete a Dodo checkout and replay
+                  the webhook.
                 </div>
               )}
             </div>
@@ -202,7 +248,9 @@ export default function DashboardOverviewPage() {
                   const ruleBucket = allocationRule?.buckets.find(
                     (bucket) => bucket.kind === intent.bucketKind
                   );
-                  const percent = ruleBucket ? Math.round(ruleBucket.percentageBps / 100) : 0;
+                  const percent = ruleBucket
+                    ? Math.round(ruleBucket.percentageBps / 100)
+                    : 0;
                   const colorClass =
                     intent.bucketKind === "contractor_escrow"
                       ? styles.dotGreen
@@ -217,7 +265,8 @@ export default function DashboardOverviewPage() {
                       <span className={`${styles.intentDot} ${colorClass}`} />
                       <div className={styles.intentInfo}>
                         <div className={styles.intentLabel}>
-                          {intent.bucketKind.replaceAll("_", " ")}
+                          {ruleBucket?.label ??
+                            intent.bucketKind.replaceAll("_", " ")}
                         </div>
                         <div className={styles.intentWallet}>
                           {shortId(intent.recipientWallet, 10, 4)}
@@ -232,7 +281,13 @@ export default function DashboardOverviewPage() {
                       <div>
                         <span
                           className={`${styles.tag} ${
-                            intent.status === "pending_approval" ? styles.tagAmber : styles.tagGreen
+                            intent.status === "pending_approval"
+                              ? styles.tagAmber
+                              : intent.status === "failed"
+                                ? styles.tagRed
+                                : intent.status === "confirmed"
+                                  ? styles.tagBlue
+                                  : styles.tagGreen
                           }`}
                         >
                           {intent.status}
@@ -285,9 +340,15 @@ export default function DashboardOverviewPage() {
             <div className={styles.cardHeader}>
               <div>
                 <div className={styles.cardEyebrow}>active rule</div>
-                <div className={styles.cardTitle}>{allocationRule?.name ?? "No live rule yet"}</div>
+                <div className={styles.cardTitle}>
+                  {allocationRule?.name ?? "No live rule yet"}
+                </div>
               </div>
-              <span className={`${styles.tag} ${allocationRule ? styles.tagGreen : styles.tagMuted}`}>
+              <span
+                className={`${styles.tag} ${
+                  allocationRule ? styles.tagGreen : styles.tagMuted
+                }`}
+              >
                 {allocationRule ? "enabled" : "waiting"}
               </span>
             </div>
@@ -297,10 +358,20 @@ export default function DashboardOverviewPage() {
                   <div className={styles.miniLabel} style={{ marginBottom: 8 }}>
                     {allocationRule.id}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      marginBottom: 14,
+                    }}
+                  >
                     <DataPair label="Workspace" value={allocationRule.workspaceId} />
                     <DataPair label="Merchant" value={allocationRule.merchantId} />
-                    <DataPair label="Product tag" value={allocationRule.productTag ?? "n/a"} />
+                    <DataPair
+                      label="Product tag"
+                      value={allocationRule.productTag ?? "n/a"}
+                    />
                     <DataPair
                       label="Daily limit"
                       value={formatMoney(allocationRule.dailyLimitCents, "USD")}
@@ -315,7 +386,9 @@ export default function DashboardOverviewPage() {
             <div className={styles.footer}>
               <span className={styles.footerLabel}>buckets</span>
               <span className={styles.footerValue}>
-                {allocationRule ? `${allocationRule.buckets.length} configured` : "waiting for data"}
+                {allocationRule
+                  ? `${allocationRule.buckets.length} configured`
+                  : "waiting for data"}
               </span>
             </div>
           </div>
@@ -331,30 +404,78 @@ export default function DashboardOverviewPage() {
             <div className={styles.cardBody}>
               {latestReceipt ? (
                 <>
-                  <div className={styles.mono} style={{ fontSize: 11, marginBottom: 10, color: "var(--ink-muted)" }}>
+                  <div
+                    className={styles.mono}
+                    style={{
+                      fontSize: 11,
+                      marginBottom: 10,
+                      color: "var(--ink-muted)",
+                    }}
+                  >
                     {latestReceipt.id}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                     <DataPair
                       label="Dodo event"
-                      value={<span className={`${styles.tag} ${styles.tagGreen}`}>{latestReceipt.revenueEvent.type}</span>}
+                      value={
+                        <span className={`${styles.tag} ${styles.tagGreen}`}>
+                          {latestReceipt.revenueEvent.type}
+                        </span>
+                      }
                     />
-                    <DataPair label="Intents" value={`${latestReceipt.payoutIntents.length} generated`} />
+                    <DataPair
+                      label="Intents"
+                      value={`${latestReceipt.payoutIntents.length} generated`}
+                    />
                     <DataPair
                       label="Solana settlement"
-                      value={<span className={`${styles.tag} ${styles.tagMuted}`}>pending</span>}
+                      value={
+                        <span
+                          className={`${styles.tag} ${
+                            latestReceipt.payoutIntents.every(
+                              (intent) => intent.status === "confirmed"
+                            )
+                              ? styles.tagBlue
+                              : latestReceipt.payoutIntents.some(
+                                    (intent) => intent.status === "confirmed"
+                                  )
+                                ? styles.tagAmber
+                                : styles.tagMuted
+                          }`}
+                        >
+                          {latestReceipt.payoutIntents.every(
+                            (intent) => intent.status === "confirmed"
+                          )
+                            ? "confirmed"
+                            : latestReceipt.payoutIntents.some(
+                                  (intent) => intent.status === "confirmed"
+                                )
+                              ? "partial"
+                              : "pending"}
+                        </span>
+                      }
                     />
                     <DataPair
                       label="Explorer"
                       value={
-                        <a
-                          href="https://explorer.solana.com/?cluster=devnet"
-                          target="_blank"
-                          rel="noreferrer"
-                          className={styles.explorerLink}
-                        >
-                          devnet
-                        </a>
+                        latestReceipt.payoutIntents.find(
+                          (intent) => intent.explorerUrl
+                        ) ? (
+                          <a
+                            href={
+                              latestReceipt.payoutIntents.find(
+                                (intent) => intent.explorerUrl
+                              )?.explorerUrl
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.explorerLink}
+                          >
+                            latest tx
+                          </a>
+                        ) : (
+                          "waiting"
+                        )
                       }
                     />
                   </div>
@@ -407,7 +528,10 @@ function DataPair({
   return (
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
       <span className={styles.muted}>{label}</span>
-      <span className={styles.mono} style={emphasize ? { color: "var(--green)" } : undefined}>
+      <span
+        className={styles.mono}
+        style={emphasize ? { color: "var(--green)" } : undefined}
+      >
         {value}
       </span>
     </div>

@@ -350,6 +350,27 @@ export default function Home() {
           align-items: center;
         }
 
+        .cream-auth-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 36px;
+          padding: 0 14px;
+          border-radius: 10px;
+          border: 1px solid var(--cta-outline);
+          background: var(--surface);
+          color: var(--ink) !important;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 600;
+          box-shadow: var(--shadow-sm);
+          white-space: nowrap;
+        }
+
+        .cream-auth-btn:hover {
+          background: var(--cream-dark);
+        }
+
         .cream-utility-rail {
           position: fixed;
           top: 72px;
@@ -1421,6 +1442,9 @@ export default function Home() {
           ))}
         </div>
         <div className="cream-nav-right">
+          <a href="/login" className="cream-auth-btn">
+            Founder Login / Sign up
+          </a>
           <ThemeToggle />
           <ClusterSelect />
           <WalletButton />

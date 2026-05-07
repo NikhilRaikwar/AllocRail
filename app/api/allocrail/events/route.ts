@@ -4,6 +4,7 @@ import {
   listRecentReceipts,
   listRecentRevenueEvents,
 } from "@/app/lib/allocrail/event-store";
+import type { RevenueEvent } from "@/app/lib/allocrail/types";
 
 function escapeCsv(value: string | number | null | undefined) {
   const stringValue = value == null ? "" : String(value);
@@ -11,8 +12,8 @@ function escapeCsv(value: string | number | null | undefined) {
   return `"${escaped}"`;
 }
 
-function buildEventsCsv() {
-  const events = listRecentRevenueEvents();
+async function buildEventsCsv() {
+  const events = await listRecentRevenueEvents();
   const header = [
     "event_id",
     "event_type",
@@ -27,7 +28,7 @@ function buildEventsCsv() {
     "received_at",
   ];
 
-  const rows = events.map((event) =>
+  const rows = events.map((event: RevenueEvent) =>
     [
       event.id,
       event.type,
@@ -48,14 +49,16 @@ function buildEventsCsv() {
   return [header.join(","), ...rows].join("\n");
 }
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const format = req.nextUrl.searchParams.get("format");
-  const events = listRecentRevenueEvents();
-  const payoutIntents = listRecentPayoutIntents();
-  const receipts = listRecentReceipts();
+  const [events, payoutIntents, receipts] = await Promise.all([
+    listRecentRevenueEvents(),
+    listRecentPayoutIntents(),
+    listRecentReceipts(),
+  ]);
 
   if (format === "csv") {
-    const csv = buildEventsCsv();
+    const csv = await buildEventsCsv();
     const timestamp = new Date().toISOString().slice(0, 10);
 
     return new NextResponse(csv, {

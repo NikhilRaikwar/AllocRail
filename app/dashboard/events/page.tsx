@@ -7,8 +7,8 @@ import {
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
 
-export default function DashboardEventsPage() {
-  const snapshot = getDashboardSnapshot();
+export default async function DashboardEventsPage() {
+  const snapshot = await getDashboardSnapshot();
 
   return (
     <DashboardShell title="Revenue Events">

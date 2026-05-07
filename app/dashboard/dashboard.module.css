@@ -114,6 +114,37 @@
   gap: 10px;
 }
 
+.authWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+
+.authMeta {
+  font-size: 11px;
+  color: var(--ink-muted);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authLink,
+.authLinkButton {
+  font-size: 11px;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+
+.authLinkButton {
+  cursor: pointer;
+}
+
 .controlWrap :global(button),
 .controlWrap :global(a) {
   box-shadow: none;
@@ -709,6 +740,56 @@
   color: var(--blue);
   text-decoration: none;
   border-bottom: 1px dotted var(--blue);
+}
+
+.intentActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.inlineAction,
+.inlineActionPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.inlineAction {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.inlineActionPrimary {
+  border: none;
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.inlineAction:disabled,
+.inlineActionPrimary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.inlineError {
+  font-size: 10px;
+  color: var(--red);
+  max-width: 170px;
+  line-height: 1.4;
+}
+
+.txCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
 }
 
 .pageHidden { display: none; }

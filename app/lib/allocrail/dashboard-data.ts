@@ -1,4 +1,5 @@
 import {
+  listAllocationRules,
   listRecentPayoutIntents,
   listRecentReceipts,
   listRecentRevenueEvents,
@@ -14,12 +15,14 @@ import type {
 type BucketSummary = {
   kind: AllocationBucketKind;
   label: string;
+  percentageBps: number;
   count: number;
   amountCents: number;
   pendingApproval: number;
 };
 
 export type DashboardSnapshot = {
+  allocationRules: AllocationRule[];
   events: RevenueEvent[];
   payoutIntents: PayoutIntent[];
   receipts: AllocRailReceipt[];
@@ -38,15 +41,19 @@ export type DashboardSnapshot = {
   bucketSummaries: BucketSummary[];
 };
 
-export function getDashboardSnapshot(): DashboardSnapshot {
-  const events = listRecentRevenueEvents();
-  const payoutIntents = listRecentPayoutIntents();
-  const receipts = listRecentReceipts();
+export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
+  const [events, payoutIntents, receipts, allocationRules] = await Promise.all([
+    listRecentRevenueEvents(),
+    listRecentPayoutIntents(),
+    listRecentReceipts(),
+    listAllocationRules(),
+  ]);
   const latestReceipt = receipts[0] ?? null;
   const latestEvent = events[0] ?? null;
-  const allocationRule = latestReceipt?.allocationRule ?? null;
+  const allocationRule = latestReceipt?.allocationRule ?? allocationRules[0] ?? null;
 
   return {
+    allocationRules,
     events,
     payoutIntents,
     receipts,
@@ -72,6 +79,7 @@ export function getDashboardSnapshot(): DashboardSnapshot {
       return {
         kind: bucket.kind,
         label: bucket.label,
+        percentageBps: bucket.percentageBps,
         count: matching.length,
         amountCents: matching.reduce((sum, intent) => sum + intent.amountCents, 0),
         pendingApproval: matching.filter(
