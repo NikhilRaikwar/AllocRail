@@ -7,8 +7,10 @@ import {
   type StandardDisconnectFeature,
 } from "@wallet-standard/features";
 import {
+  SolanaSignMessage,
   SolanaSignTransaction,
   SolanaSignAndSendTransaction,
+  type SolanaSignMessageFeature,
   type SolanaSignTransactionFeature,
   type SolanaSignAndSendTransactionFeature,
 } from "@solana/wallet-standard-features";
@@ -53,6 +55,7 @@ function createConnector(wallet: StandardWallet): WalletConnector {
       };
 
       const hasSendTx = SolanaSignAndSendTransaction in wallet.features;
+      const hasSignMessage = SolanaSignMessage in wallet.features;
       const hasSignTx = SolanaSignTransaction in wallet.features;
 
       const session: WalletSession = {
@@ -66,6 +69,21 @@ function createConnector(wallet: StandardWallet): WalletConnector {
             await feature.disconnect();
           }
         },
+        signMessage: hasSignMessage
+          ? async (message: Uint8Array) => {
+              const feature = wallet.features[
+                SolanaSignMessage
+              ] as SolanaSignMessageFeature[typeof SolanaSignMessage];
+              const [result] = await feature.signMessage({
+                account,
+                message,
+              });
+              return {
+                signedMessage: new Uint8Array(result.signedMessage),
+                signature: new Uint8Array(result.signature),
+              };
+            }
+          : undefined,
         signTransaction: hasSignTx
           ? async (transaction: Uint8Array, chain: string) => {
               const feature = wallet.features[

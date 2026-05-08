@@ -945,6 +945,14 @@
   flex-wrap: wrap;
 }
 
+.sectionToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
 .helperText {
   font-size: 12px;
   color: var(--ink-muted);
@@ -994,6 +1002,14 @@
   align-items: center;
 }
 
+.eventsFilterBar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) 180px 190px 190px 150px auto auto;
+  gap: 10px;
+  padding: 16px 20px 18px;
+  align-items: center;
+}
+
 .routeFilterInput,
 .routeFilterSelect {
   width: 100%;
@@ -1016,6 +1032,76 @@
 .routeGroupList {
   display: flex;
   flex-direction: column;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventRowCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 18px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eventRowCard:last-child {
+  border-bottom: none;
+}
+
+.eventRowMain {
+  min-width: 0;
+}
+
+.eventRowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.eventRowTagGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eventRowSummary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.eventRowContext {
+  font-family: var(--font-dashboard-mono), monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.eventRowMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.eventMetaCard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--cream-dark) 8%);
+  padding: 12px;
+  min-width: 0;
+}
+
+.eventRowActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .routeGroupCard {
@@ -1128,6 +1214,11 @@
   .formGrid { grid-template-columns: 1fr; }
   .navRight { gap: 8px; }
   .routeFilterBar { grid-template-columns: 1fr; }
+  .eventsFilterBar { grid-template-columns: 1fr; }
+  .sectionToolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .routeGroupSummary { grid-template-columns: 1fr; }
   .routeGroupStats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1140,5 +1231,14 @@
   .receiptRow {
     flex-direction: column;
     align-items: stretch;
+  }
+  .eventRowCard {
+    grid-template-columns: 1fr;
+  }
+  .eventRowMetaGrid {
+    grid-template-columns: 1fr;
+  }
+  .eventRowActions {
+    justify-content: flex-start;
   }
 }

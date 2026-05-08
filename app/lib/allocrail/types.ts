@@ -4,6 +4,16 @@ export type AllocationBucketKind =
   | "founder_share"
   | "agent_budget";
 
+export type TreasuryRefillMode =
+  | "prefunded_treasury"
+  | "manual_rebalance"
+  | "external_fx_partner";
+
+export type TreasuryFxSource =
+  | "manual_rate"
+  | "treasury_desk"
+  | "exchange_reference";
+
 export type RevenueEventType =
   | "payment.succeeded"
   | "refund.succeeded"
@@ -17,8 +27,34 @@ export type RevenueEventType =
   | "dispute.lost"
   | "subscription.active"
   | "subscription.renewed"
+  | "subscription.cancelled"
+  | "subscription.updated"
   | "credit.added"
-  | "credit.deducted";
+  | "credit.deducted"
+  | "credit.balance_low";
+
+export type RevenueRouteKind =
+  | "revenue_route"
+  | "recurring_route"
+  | "budget_signal"
+  | "lifecycle_signal";
+
+export type RevenueEventContext = {
+  routeKind: RevenueRouteKind;
+  summary?: string;
+  subscriptionStatus?: string;
+  subscriptionProductId?: string;
+  nextBillingDate?: string;
+  customerId?: string;
+  creditEntitlementId?: string;
+  creditEntitlementName?: string;
+  availableBalance?: string;
+  thresholdAmount?: string;
+  thresholdPercent?: number;
+  ledgerAmount?: string;
+  sourceReferenceId?: string;
+  sourceReferenceType?: string;
+};
 
 export type PayoutIntentStatus =
   | "draft"
@@ -64,12 +100,18 @@ export type RevenueEvent = {
   dodoEventId: string;
   dodoPaymentId?: string;
   dodoSubscriptionId?: string;
+  dodoCustomerId?: string;
   checkoutSessionId?: string;
   dodoRefundId?: string;
   dodoRefundStatus?: string;
   refundReason?: string;
   refundRequestedAt?: string;
   refundedAt?: string;
+  creditEntitlementId?: string;
+  creditEntitlementName?: string;
+  sourceReferenceId?: string;
+  sourceReferenceType?: string;
+  eventContext?: RevenueEventContext;
   type: RevenueEventType;
   amountCents: number;
   currency: string;
@@ -112,4 +154,10 @@ export type FounderProfile = {
   userId: string;
   email: string;
   fullName: string;
+  treasuryOperatorWallet?: string;
+  walletBoundAt?: string;
+  treasuryRefillMode: TreasuryRefillMode;
+  fxSource: TreasuryFxSource;
+  fxRateInrUsd: number;
+  fxRateUpdatedAt?: string;
 };

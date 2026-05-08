@@ -2,6 +2,7 @@ import DodoPayments from "dodopayments";
 import type { CheckoutSessionCreateParams } from "dodopayments/resources/checkout-sessions";
 import type { Payment } from "dodopayments/resources/payments";
 import type { Refund, RefundCreateParams } from "dodopayments/resources/refunds";
+import type { Subscription } from "dodopayments/resources/subscriptions";
 import { demoAllocationRule } from "./demo-data";
 import { getAppEnvironment } from "./env";
 import type { DodoRoutingMetadata } from "./types";
@@ -96,6 +97,12 @@ export async function createDodoCheckoutSession(
 
 export async function retrieveDodoPayment(paymentId: string): Promise<Payment> {
   return getDodoClient().payments.retrieve(paymentId);
+}
+
+export async function retrieveDodoSubscription(
+  subscriptionId: string
+): Promise<Subscription> {
+  return getDodoClient().subscriptions.retrieve(subscriptionId);
 }
 
 export async function retrieveDodoPaymentReceipt(

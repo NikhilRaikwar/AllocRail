@@ -1,13 +1,20 @@
 import type { WebhookPayload } from "dodopayments/resources/webhook-events";
 import { parseDodoRoutingMetadata } from "./metadata";
-import type { RevenueEvent, RevenueEventType } from "./types";
+import type {
+  DodoRoutingMetadata,
+  RevenueEvent,
+  RevenueEventType,
+} from "./types";
 
 const SUPPORTED_REVENUE_EVENTS: RevenueEventType[] = [
   "payment.succeeded",
   "subscription.active",
   "subscription.renewed",
+  "subscription.cancelled",
+  "subscription.updated",
   "credit.added",
   "credit.deducted",
+  "credit.balance_low",
 ];
 
 const SUPPORTED_GUARDRAIL_EVENTS: RevenueEventType[] = [
@@ -35,6 +42,14 @@ export function isSupportedGuardrailEvent(
 }
 
 function readAmountUsdCents(payload: WebhookPayload) {
+  if (
+    "payload_type" in payload.data &&
+    (payload.data.payload_type === "CreditLedgerEntry" ||
+      payload.data.payload_type === "CreditBalanceLow")
+  ) {
+    return 0;
+  }
+
   if ("total_amount" in payload.data && typeof payload.data.total_amount === "number") {
     return payload.data.total_amount;
   }
@@ -63,10 +78,9 @@ function readCurrency(payload: WebhookPayload) {
 
 export function toRevenueEvent(
   dodoEventId: string,
-  payload: WebhookPayload
+  payload: WebhookPayload,
+  metadata: DodoRoutingMetadata
 ): RevenueEvent {
-  const metadata = parseDodoRoutingMetadata(readMetadata(payload));
-
   return {
     id: `rev_${dodoEventId}`,
     dodoEventId,
@@ -78,9 +92,31 @@ export function toRevenueEvent(
       "subscription_id" in payload.data
         ? toOptionalString(payload.data.subscription_id)
         : undefined,
+    dodoCustomerId:
+      "customer_id" in payload.data
+        ? toOptionalString(payload.data.customer_id)
+        : "customer" in payload.data
+          ? toOptionalString(payload.data.customer?.customer_id)
+          : undefined,
     checkoutSessionId:
       "checkout_session_id" in payload.data
         ? toOptionalString(payload.data.checkout_session_id)
+        : undefined,
+    creditEntitlementId:
+      "credit_entitlement_id" in payload.data
+        ? toOptionalString(payload.data.credit_entitlement_id)
+        : undefined,
+    creditEntitlementName:
+      "credit_entitlement_name" in payload.data
+        ? toOptionalString(payload.data.credit_entitlement_name)
+        : undefined,
+    sourceReferenceId:
+      "reference_id" in payload.data
+        ? toOptionalString(payload.data.reference_id)
+        : undefined,
+    sourceReferenceType:
+      "reference_type" in payload.data
+        ? toOptionalString(payload.data.reference_type)
         : undefined,
     type: payload.type as RevenueEventType,
     amountCents: readAmountUsdCents(payload),
@@ -95,15 +131,16 @@ function readMetadata(payload: WebhookPayload) {
     return payload.data.metadata;
   }
 
-  throw new Error(`Webhook payload for ${payload.type} is missing metadata`);
+  return undefined;
 }
 
 export function readOptionalMetadata(payload: WebhookPayload) {
-  if ("metadata" in payload.data && payload.data.metadata) {
-    return payload.data.metadata;
-  }
+  return readMetadata(payload);
+}
 
-  return undefined;
+export function readRoutingMetadata(payload: WebhookPayload) {
+  const metadata = readMetadata(payload);
+  return metadata ? parseDodoRoutingMetadata(metadata) : undefined;
 }
 
 export function readPaymentId(payload: WebhookPayload) {
@@ -145,6 +182,61 @@ export function readCheckoutSessionId(payload: WebhookPayload) {
 export function readSubscriptionId(payload: WebhookPayload) {
   return "subscription_id" in payload.data
     ? toOptionalString(payload.data.subscription_id)
+    : undefined;
+}
+
+export function readCustomerId(payload: WebhookPayload) {
+  return "customer_id" in payload.data
+    ? toOptionalString(payload.data.customer_id)
+    : "customer" in payload.data
+      ? toOptionalString(payload.data.customer?.customer_id)
+      : undefined;
+}
+
+export function readCreditEntitlementId(payload: WebhookPayload) {
+  return "credit_entitlement_id" in payload.data
+    ? toOptionalString(payload.data.credit_entitlement_id)
+    : undefined;
+}
+
+export function readCreditEntitlementName(payload: WebhookPayload) {
+  return "credit_entitlement_name" in payload.data
+    ? toOptionalString(payload.data.credit_entitlement_name)
+    : undefined;
+}
+
+export function readAvailableBalance(payload: WebhookPayload) {
+  return "available_balance" in payload.data
+    ? toOptionalString(payload.data.available_balance)
+    : undefined;
+}
+
+export function readThresholdAmount(payload: WebhookPayload) {
+  return "threshold_amount" in payload.data
+    ? toOptionalString(payload.data.threshold_amount)
+    : undefined;
+}
+
+export function readThresholdPercent(payload: WebhookPayload) {
+  return "threshold_percent" in payload.data &&
+    typeof payload.data.threshold_percent === "number"
+    ? payload.data.threshold_percent
+    : undefined;
+}
+
+export function readLedgerAmount(payload: WebhookPayload) {
+  return "amount" in payload.data ? toOptionalString(String(payload.data.amount)) : undefined;
+}
+
+export function readReferenceId(payload: WebhookPayload) {
+  return "reference_id" in payload.data
+    ? toOptionalString(payload.data.reference_id)
+    : undefined;
+}
+
+export function readReferenceType(payload: WebhookPayload) {
+  return "reference_type" in payload.data
+    ? toOptionalString(payload.data.reference_type)
     : undefined;
 }
 

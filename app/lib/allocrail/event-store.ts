@@ -30,12 +30,18 @@ type RevenueEventRow = {
   dodo_event_id: string;
   dodo_payment_id: string | null;
   dodo_subscription_id: string | null;
+  dodo_customer_id: string | null;
   checkout_session_id: string | null;
   dodo_refund_id: string | null;
   dodo_refund_status: string | null;
   refund_reason: string | null;
   refund_requested_at: string | null;
   refunded_at: string | null;
+  credit_entitlement_id: string | null;
+  credit_entitlement_name: string | null;
+  source_reference_id: string | null;
+  source_reference_type: string | null;
+  event_context: RevenueEvent["eventContext"] | null;
   type: RevenueEvent["type"];
   amount_cents: number | string;
   currency: string;
@@ -135,12 +141,18 @@ function mapRevenueEventRow(row: RevenueEventRow): RevenueEvent {
     dodoEventId: row.dodo_event_id,
     dodoPaymentId: row.dodo_payment_id ?? undefined,
     dodoSubscriptionId: row.dodo_subscription_id ?? undefined,
+    dodoCustomerId: row.dodo_customer_id ?? undefined,
     checkoutSessionId: row.checkout_session_id ?? undefined,
     dodoRefundId: row.dodo_refund_id ?? undefined,
     dodoRefundStatus: row.dodo_refund_status ?? undefined,
     refundReason: row.refund_reason ?? undefined,
     refundRequestedAt: row.refund_requested_at ?? undefined,
     refundedAt: row.refunded_at ?? undefined,
+    creditEntitlementId: row.credit_entitlement_id ?? undefined,
+    creditEntitlementName: row.credit_entitlement_name ?? undefined,
+    sourceReferenceId: row.source_reference_id ?? undefined,
+    sourceReferenceType: row.source_reference_type ?? undefined,
+    eventContext: row.event_context ?? undefined,
     type: row.type,
     amountCents: toNumber(row.amount_cents),
     currency: row.currency,
@@ -197,12 +209,18 @@ function toRevenueEventRow(event: RevenueEvent): RevenueEventRow {
     dodo_event_id: event.dodoEventId,
     dodo_payment_id: event.dodoPaymentId ?? null,
     dodo_subscription_id: event.dodoSubscriptionId ?? null,
+    dodo_customer_id: event.dodoCustomerId ?? null,
     checkout_session_id: event.checkoutSessionId ?? null,
     dodo_refund_id: event.dodoRefundId ?? null,
     dodo_refund_status: event.dodoRefundStatus ?? null,
     refund_reason: event.refundReason ?? null,
     refund_requested_at: event.refundRequestedAt ?? null,
     refunded_at: event.refundedAt ?? null,
+    credit_entitlement_id: event.creditEntitlementId ?? null,
+    credit_entitlement_name: event.creditEntitlementName ?? null,
+    source_reference_id: event.sourceReferenceId ?? null,
+    source_reference_type: event.sourceReferenceType ?? null,
+    event_context: event.eventContext ?? null,
     type: event.type,
     amount_cents: event.amountCents,
     currency: event.currency,
@@ -481,33 +499,54 @@ export async function upsertAllocationRule(
   return mapRuleRow(data as AllocationRuleRow);
 }
 
+export async function deleteAllocationRule(id: string): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    const state = getMemoryState();
+    state.rules = state.rules.filter((rule) => rule.id !== id);
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("allocation_rules").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function recordWebhookEvent(
   webhookId: string,
   event: RevenueEvent,
   payoutIntents: PayoutIntent[],
-  receipt: AllocRailReceipt
+  receipt?: AllocRailReceipt
 ): Promise<void> {
   if (!isSupabaseConfigured()) {
     const state = getMemoryState();
     state.seenWebhookIds.add(webhookId);
-    state.rules = [
-      receipt.allocationRule,
-      ...state.rules.filter((rule) => rule.id !== receipt.allocationRule.id),
-    ];
+    if (receipt) {
+      state.rules = [
+        receipt.allocationRule,
+        ...state.rules.filter((rule) => rule.id !== receipt.allocationRule.id),
+      ];
+    }
     state.events.unshift(event);
     state.events = state.events.slice(0, MAX_EVENTS);
     state.payoutIntents = [...payoutIntents, ...state.payoutIntents].slice(
       0,
       MAX_EVENTS * 4
     );
-    state.receipts.unshift(receipt);
-    state.receipts = state.receipts.slice(0, MAX_EVENTS);
+    if (receipt) {
+      state.receipts.unshift(receipt);
+      state.receipts = state.receipts.slice(0, MAX_EVENTS);
+    }
     return;
   }
 
   const supabase = getSupabaseAdmin();
 
-  await syncAllocationRule(receipt.allocationRule);
+  if (receipt) {
+    await syncAllocationRule(receipt.allocationRule);
+  }
 
   const { error: eventError } = await supabase
     .from("revenue_events")
@@ -523,16 +562,18 @@ export async function recordWebhookEvent(
     throw new Error(intentsError.message);
   }
 
-  const { error: receiptError } = await supabase.from("receipts").upsert(
-    {
-      id: receipt.id,
-      revenue_event_id: receipt.revenueEvent.id,
-      allocation_rule_id: receipt.allocationRule.id,
-    },
-    { onConflict: "id" }
-  );
-  if (receiptError) {
-    throw new Error(receiptError.message);
+  if (receipt) {
+    const { error: receiptError } = await supabase.from("receipts").upsert(
+      {
+        id: receipt.id,
+        revenue_event_id: receipt.revenueEvent.id,
+        allocation_rule_id: receipt.allocationRule.id,
+      },
+      { onConflict: "id" }
+    );
+    if (receiptError) {
+      throw new Error(receiptError.message);
+    }
   }
 
   const { error: deliveryError } = await supabase
@@ -624,6 +665,102 @@ export async function findRevenueEventByReference({
   }
 
   return data ? mapRevenueEventRow(data as RevenueEventRow) : undefined;
+}
+
+export async function findRecurringRouteForSubscriptionCycle(args: {
+  subscriptionId: string;
+  nextBillingDate: string;
+}): Promise<RevenueEvent | undefined> {
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().events.find(
+      (event) =>
+        event.dodoSubscriptionId === args.subscriptionId &&
+        (event.type === "subscription.active" ||
+          event.type === "subscription.renewed") &&
+        event.eventContext?.nextBillingDate === args.nextBillingDate
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("revenue_events")
+    .select("*")
+    .eq("dodo_subscription_id", args.subscriptionId)
+    .in("type", ["subscription.active", "subscription.renewed"])
+    .contains("event_context", { nextBillingDate: args.nextBillingDate })
+    .order("received_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ? mapRevenueEventRow(data as RevenueEventRow) : undefined;
+}
+
+export async function findActionableRouteForSubscriptionCycle(args: {
+  subscriptionId: string;
+  nextBillingDate: string;
+}): Promise<RevenueEvent | undefined> {
+  const isActionable = (event: RevenueEvent) =>
+    event.dodoSubscriptionId === args.subscriptionId &&
+    event.eventContext?.nextBillingDate === args.nextBillingDate &&
+    (event.eventContext?.routeKind === "revenue_route" ||
+      event.eventContext?.routeKind === "recurring_route");
+
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().events.find(isActionable);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("revenue_events")
+    .select("*")
+    .eq("dodo_subscription_id", args.subscriptionId)
+    .contains("event_context", { nextBillingDate: args.nextBillingDate })
+    .order("received_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? [])
+    .map((row: unknown) => mapRevenueEventRow(row as RevenueEventRow))
+    .find(isActionable);
+}
+
+export async function findLatestRevenueEventByCustomer(
+  customerId: string
+): Promise<RevenueEvent | undefined> {
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().events.find(
+      (event) => event.dodoCustomerId === customerId
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("revenue_events")
+    .select("*")
+    .eq("dodo_customer_id", customerId)
+    .order("received_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? [])
+    .map((row: unknown) => mapRevenueEventRow(row as RevenueEventRow))
+    .find(
+      (event: RevenueEvent) =>
+        event.metadata?.workspace_id &&
+        event.metadata?.merchant_id &&
+        event.metadata?.rule_id &&
+        event.metadata?.product_tag
+    );
 }
 
 export async function updateRevenueEventById(

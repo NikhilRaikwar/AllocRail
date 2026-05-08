@@ -50,6 +50,8 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Supabase-backed storage for webhook idempotency, revenue events, payout intents, receipts, and allocation rules.
 - Receipt page linking Dodo event IDs to settlement state and real Solana transaction signatures.
 - Founder profile settings backed by Supabase auth metadata and founder profile records.
+- Cryptographically verified treasury operator wallet binding for founder approval and execution controls.
+- Founder-managed treasury refill mode and FX source configuration with explicit INR/USD routing basis.
 - Refund request flow from the Revenue Events inbox with Dodo refund receipt linkage.
 - Quarantine / hold logic for refund and dispute events before unsettled Solana payout execution.
 - Grouped payout routes by payment ID with route-level filtering for ops review.
@@ -101,11 +103,13 @@ product_tag
 - Milestone 4: founder dashboard
 - Milestone 5: Solana devnet USDC settlement proof with durable Supabase persistence and founder auth
 - Milestone 6: approval controls and safety guardrails
+- Milestone 7: deeper Dodo semantic integration for subscriptions and credit events
+- Production hardening: verified wallet-to-founder binding and treasury refill / FX source architecture
 
 Next:
 
-- Milestone 7: deeper Dodo semantic integration for subscriptions and credit events
-- Production hardening: verified wallet-to-founder binding and treasury refill / FX source architecture
+- Milestone 8: AI treasury copilot
+- Milestone 9: submission polish, trust layer, and demo hardening
 
 ## Stack
 
@@ -150,8 +154,10 @@ Apply the current Supabase migrations in order:
 
 ```text
 supabase/migrations/20260507_allocrail_milestone_6.sql
+supabase/migrations/20260508_allocrail_milestone_7_dodo_depth.sql
 supabase/migrations/20260508_allocrail_receipt_sources.sql
 supabase/migrations/20260508_allocrail_founder_rls.sql
+supabase/migrations/20260509_allocrail_wallet_binding_treasury_config.sql
 ```
 
 Start the app:
@@ -175,8 +181,9 @@ When Supabase is configured, events, payout intents, receipts, founder profiles,
 - Dodo is the verified revenue source of truth.
 - Solana devnet USDC is the programmable payout rail.
 - Founder approval and refund/dispute holds now sit between revenue ingestion and on-chain execution.
-- Current treasury model is pre-funded USDC payout from the founder treasury wallet.
-- Verified wallet-to-founder binding and automated fiat-to-USDC treasury refill are not implemented yet.
+- Founder approval, rejection, and execution now require a bound treasury operator wallet.
+- Current settlement executor is still a pre-funded server treasury signer in demo mode.
+- Treasury refill mode and FX source are now explicit founder-managed settings rather than hidden routing assumptions.
 
 ## Agentic Engineering Context
 

@@ -1,29 +1,26 @@
 import { demoAllocationRule } from "./demo-data";
 import { findAllocationRuleByMetadata } from "./event-store";
+import { getTreasuryConfigForWorkspace } from "./founder";
 import { isValidAllocationTotal } from "./metadata";
 import type { AllocationRule, AllocRailReceipt, PayoutIntent, RevenueEvent } from "./types";
 
-const FX_RATES_TO_USD: Partial<Record<string, number>> = {
-  USD: 1,
-  USDC: 1,
-  INR: 83,
-};
-
-function normalizeRevenueToSettlementCents(
+async function normalizeRevenueToSettlementCents(
   amountCents: number,
-  sourceCurrencyRaw: string
+  sourceCurrencyRaw: string,
+  workspaceId: string
 ) {
   const sourceCurrency = sourceCurrencyRaw.toUpperCase();
-  const rate = FX_RATES_TO_USD[sourceCurrency];
 
-  if (!rate) {
+  if (sourceCurrency === "USD" || sourceCurrency === "USDC") {
     return amountCents;
   }
 
-  if (rate === 1) {
+  if (sourceCurrency !== "INR") {
     return amountCents;
   }
 
+  const treasuryConfig = await getTreasuryConfigForWorkspace(workspaceId);
+  const rate = treasuryConfig.fxRateInrUsd;
   return Math.round(amountCents / rate);
 }
 
@@ -62,22 +59,35 @@ export async function resolveAllocationRule(event: RevenueEvent): Promise<Alloca
   return demoAllocationRule;
 }
 
-export function createPayoutIntents(
+export async function createPayoutIntents(
   event: RevenueEvent,
   rule: AllocationRule,
   settlementBasis?: {
     amountCents: number;
     currency: string;
+  },
+  options?: {
+    includeKinds?: string[];
   }
-): PayoutIntent[] {
+): Promise<PayoutIntent[]> {
   const settlementAmountCents = settlementBasis
-    ? normalizeRevenueToSettlementCents(
+    ? await normalizeRevenueToSettlementCents(
         settlementBasis.amountCents,
-        settlementBasis.currency
+        settlementBasis.currency,
+        event.metadata.workspace_id
       )
-    : normalizeRevenueToSettlementCents(event.amountCents, event.currency);
+    : await normalizeRevenueToSettlementCents(
+        event.amountCents,
+        event.currency,
+        event.metadata.workspace_id
+      );
 
-  return rule.buckets.map((bucket) => ({
+  const includedKinds = options?.includeKinds ?? null;
+  const buckets = includedKinds
+    ? rule.buckets.filter((bucket) => includedKinds.includes(bucket.kind))
+    : rule.buckets;
+
+  return buckets.map((bucket) => ({
     id: `po_${event.id}_${bucket.kind}`,
     revenueEventId: event.id,
     bucketKind: bucket.kind,

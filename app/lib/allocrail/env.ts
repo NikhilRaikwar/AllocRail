@@ -8,7 +8,6 @@ export type AppEnvironment = {
   solanaUsdcMint: string;
   hasDodoApiKey: boolean;
   hasDodoWebhookSecret: boolean;
-  hasTreasurySigner: boolean;
   hasSupabase: boolean;
   allocRailProgramId?: string;
 };
@@ -55,7 +54,6 @@ export function getAppEnvironment(): AppEnvironment {
       process.env.SOLANA_USDC_MINT || DEFAULT_DEVNET_USDC_MINT,
     hasDodoApiKey: Boolean(process.env.DODO_PAYMENTS_API_KEY),
     hasDodoWebhookSecret: Boolean(readDodoWebhookSecret()),
-    hasTreasurySigner: Boolean(process.env.TREASURY_SIGNER_SECRET_KEY),
     hasSupabase: Boolean(
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
         process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -72,7 +70,6 @@ export function checkEnvironment(): EnvironmentCheck {
   if (!config.hasDodoWebhookSecret) {
     missing.push("DODO_PAYMENTS_WEBHOOK_SECRET");
   }
-  if (!config.hasTreasurySigner) missing.push("TREASURY_SIGNER_SECRET_KEY");
   if (!config.hasSupabase) {
     missing.push("NEXT_PUBLIC_SUPABASE_URL");
     missing.push("SUPABASE_SERVICE_ROLE_KEY");

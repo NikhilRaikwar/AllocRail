@@ -18,8 +18,18 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = (await req.json()) as { fullName?: string };
-    const founder = await updateCurrentFounderProfile(body.fullName ?? "");
+    const body = (await req.json()) as {
+      fullName?: string;
+      treasuryRefillMode?: string;
+      fxSource?: string;
+      fxRateInrUsd?: number | string;
+    };
+    const founder = await updateCurrentFounderProfile({
+      fullName: body.fullName ?? "",
+      treasuryRefillMode: body.treasuryRefillMode as never,
+      fxSource: body.fxSource as never,
+      fxRateInrUsd: Number(body.fxRateInrUsd),
+    });
     return NextResponse.json({ founder });
   } catch (error) {
     const message =

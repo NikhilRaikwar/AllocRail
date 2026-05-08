@@ -3,15 +3,15 @@ import {
   getPayoutIntentById,
   updatePayoutIntent,
 } from "@/app/lib/allocrail/event-store";
-import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
+import { requireBoundFounderWallet } from "@/app/lib/allocrail/founder";
 
 export const runtime = "nodejs";
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const founder = await requireCurrentFounder();
+  const founder = await requireBoundFounderWallet(req);
   const { id } = await params;
   const intent = await getPayoutIntentById(id);
 

@@ -109,12 +109,23 @@ async function submitRule(draft: RuleDraft) {
   return data.rule as AllocationRule;
 }
 
+async function removeRule(ruleId: string) {
+  const response = await fetch(`/api/allocrail/rules/${ruleId}`, {
+    method: "DELETE",
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to delete rule");
+  }
+}
+
 export function RulesManager({ initialRules }: { initialRules: AllocationRule[] }) {
   const [rules, setRules] = useState(initialRules);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [draft, setDraft] = useState<RuleDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const totalBps = useMemo(
     () => draft?.buckets.reduce((sum, bucket) => sum + Number(bucket.percentageBps || 0), 0) ?? 0,
@@ -201,9 +212,30 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
     }
   };
 
+  const deleteRule = async (rule: AllocationRule) => {
+    setDeletingId(rule.id);
+    setError(null);
+    try {
+      await removeRule(rule.id);
+      setRules((current) => current.filter((item) => item.id !== rule.id));
+      if (editingId === rule.id) {
+        cancel();
+      }
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Failed to delete rule"
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
-      <div className={styles.pageActions}>
+      <div className={styles.sectionToolbar}>
+        <div className={styles.helperText}>
+          Founder-managed treasury routing rules and payout bucket controls.
+        </div>
         <button className={styles.primaryButton} type="button" onClick={startCreate}>
           + New Rule
         </button>
@@ -236,6 +268,14 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
                       onClick={() => startEdit(rule)}
                     >
                       Edit
+                    </button>
+                    <button
+                      className={styles.smallButton}
+                      type="button"
+                      disabled={deletingId === rule.id}
+                      onClick={() => deleteRule(rule)}
+                    >
+                      {deletingId === rule.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>
@@ -515,7 +555,11 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
                         </button>
                       </div>
                     </div>
-                    {error ? <div className={styles.inlineError} style={{ marginTop: 10 }}>{error}</div> : null}
+                    {error ? (
+                      <div className={styles.inlineError} style={{ marginTop: 10 }}>
+                        {error}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -742,7 +786,11 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
                 </button>
               </div>
             </div>
-            {error ? <div className={styles.inlineError} style={{ marginTop: 10 }}>{error}</div> : null}
+            {error ? (
+              <div className={styles.inlineError} style={{ marginTop: 10 }}>
+                {error}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

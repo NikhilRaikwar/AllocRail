@@ -3,6 +3,8 @@ import { PayoutIntentActions } from "@/app/components/payout-intent-actions";
 import {
   formatMoney,
   formatTimestamp,
+  getEventRouteKind,
+  getEventRouteKindLabel,
   getDashboardSnapshot,
   shortId,
 } from "@/app/lib/allocrail/dashboard-data";
@@ -57,6 +59,7 @@ export default async function DashboardPayoutIntentsPage({
       const statuses = new Set(intents.map((intent) => intent.status));
       const routeStatus = statusLabel(intents.length, openIntents.length, statuses);
       const routeDate = receipt.revenueEvent.receivedAt.slice(0, 10);
+      const routeKind = getEventRouteKind(receipt.revenueEvent);
 
       return {
         receipt,
@@ -66,6 +69,7 @@ export default async function DashboardPayoutIntentsPage({
         pendingApprovals,
         routeStatus,
         routeDate,
+        routeKind,
       };
     })
     .filter((group) => {
@@ -222,6 +226,19 @@ export default async function DashboardPayoutIntentsPage({
                       </div>
                       <span
                         className={`${styles.tag} ${
+                          group.routeKind === "revenue_route"
+                            ? styles.tagGreen
+                            : group.routeKind === "recurring_route"
+                              ? styles.tagPurple
+                              : group.routeKind === "budget_signal"
+                                ? styles.tagBlue
+                                : styles.tagAmber
+                        }`}
+                      >
+                        {getEventRouteKindLabel(group.routeKind)}
+                      </span>
+                      <span
+                        className={`${styles.tag} ${
                           group.routeStatus === "held"
                             ? styles.tagRed
                             : group.routeStatus === "approval blocked"
@@ -240,6 +257,7 @@ export default async function DashboardPayoutIntentsPage({
                     <div className={styles.routeGroupSubline}>
                       <span>Receipt {shortId(group.receipt.id, 14, 6)}</span>
                       <span>Checkout {shortId(group.receipt.revenueEvent.checkoutSessionId, 12, 4)}</span>
+                      <span>{group.receipt.revenueEvent.type}</span>
                       <span>{formatTimestamp(group.receipt.revenueEvent.receivedAt)}</span>
                     </div>
                   </div>

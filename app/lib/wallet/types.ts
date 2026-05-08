@@ -16,6 +16,10 @@ export type WalletSession = {
   account: WalletAccount;
   connector: WalletConnectorMetadata;
   disconnect: () => Promise<void>;
+  signMessage?: (message: Uint8Array) => Promise<{
+    signedMessage: Uint8Array;
+    signature: Uint8Array;
+  }>;
   signTransaction?: (
     transaction: Uint8Array,
     chain: string

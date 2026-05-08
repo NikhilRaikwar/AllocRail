@@ -10,7 +10,20 @@ import type {
   AllocRailReceipt,
   PayoutIntent,
   RevenueEvent,
+  RevenueRouteKind,
 } from "@/app/lib/allocrail/types";
+
+function isActionableMoneyRoute(event: RevenueEvent) {
+  const routeKind = getEventRouteKind(event);
+  return routeKind === "revenue_route" || routeKind === "recurring_route";
+}
+
+function isMeaningfulReceipt(receipt: AllocRailReceipt) {
+  return (
+    isActionableMoneyRoute(receipt.revenueEvent) &&
+    receipt.payoutIntents.some((intent) => intent.amountCents > 0)
+  );
+}
 
 type BucketSummary = {
   kind: AllocationBucketKind;
@@ -77,6 +90,15 @@ export type DashboardSnapshot = {
     latestReceiptIntentCount: number;
     latestReceiptPendingApprovalCount: number;
     latestReceiptQueuedCents: number;
+    revenueRouteCount: number;
+    recurringRouteCount: number;
+    budgetSignalCount: number;
+    lifecycleSignalCount: number;
+    processedTotalsByCurrency: Array<{
+      currency: string;
+      totalCents: number;
+      eventCount: number;
+    }>;
   };
   bucketSummaries: BucketSummary[];
   latestReceiptBucketSummaries: BucketSummary[];
@@ -89,14 +111,53 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     listRecentReceipts(),
     listAllocationRules(),
   ]);
-  const latestReceipt = receipts[0] ?? null;
-  const latestEvent = events[0] ?? null;
+  const latestReceipt = receipts.find(isMeaningfulReceipt) ?? receipts[0] ?? null;
+  const latestEvent =
+    events.find(
+      (event) =>
+        getEventRouteKind(event) === "revenue_route" ||
+        getEventRouteKind(event) === "recurring_route"
+    ) ??
+    events[0] ??
+    null;
+  const latestMonetaryEvent =
+    events.find((event) => isActionableMoneyRoute(event)) ?? null;
   const allocationRule = latestReceipt?.allocationRule ?? allocationRules[0] ?? null;
   const latestReceiptIntents = latestReceipt?.payoutIntents ?? [];
   const activeIntents = payoutIntents.filter(isOpenIntent);
-  const totalProcessedCents = events.reduce(
+  const routeKindCounts = events.reduce(
+    (counts, event) => {
+      counts[getEventRouteKind(event)] += 1;
+      return counts;
+    },
+    {
+      revenue_route: 0,
+      recurring_route: 0,
+      budget_signal: 0,
+      lifecycle_signal: 0,
+    } satisfies Record<RevenueRouteKind, number>
+  );
+  const totalProcessedCents = events
+    .filter((event) => isActionableMoneyRoute(event))
+    .reduce(
     (sum, event) => sum + event.amountCents,
     0
+  );
+  const processedTotalsByCurrency = Array.from(
+    events
+      .filter((event) => isActionableMoneyRoute(event))
+      .reduce((acc, event) => {
+        const current = acc.get(event.currency) ?? {
+          currency: event.currency,
+          totalCents: 0,
+          eventCount: 0,
+        };
+        current.totalCents += event.amountCents;
+        current.eventCount += 1;
+        acc.set(event.currency, current);
+        return acc;
+      }, new Map<string, { currency: string; totalCents: number; eventCount: number }>())
+      .values()
   );
 
   return {
@@ -115,10 +176,10 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       pendingApprovalCount: payoutIntents.filter(
         (intent) => intent.status === "pending_approval"
       ).length,
-      latestAmountCents: latestEvent?.amountCents ?? 0,
-      latestCurrency: latestEvent?.currency ?? "USD",
+      latestAmountCents: latestMonetaryEvent?.amountCents ?? 0,
+      latestCurrency: latestMonetaryEvent?.currency ?? "USD",
       totalProcessedCents,
-      totalProcessedCurrency: latestEvent?.currency ?? "USD",
+      totalProcessedCurrency: latestMonetaryEvent?.currency ?? "USD",
       activeIntentCount: activeIntents.length,
       activeQueuedCents: activeIntents.reduce(
         (sum, intent) => sum + intent.amountCents,
@@ -131,6 +192,11 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       latestReceiptQueuedCents: latestReceiptIntents
         .filter(isOpenIntent)
         .reduce((sum, intent) => sum + intent.amountCents, 0),
+      revenueRouteCount: routeKindCounts.revenue_route,
+      recurringRouteCount: routeKindCounts.recurring_route,
+      budgetSignalCount: routeKindCounts.budget_signal,
+      lifecycleSignalCount: routeKindCounts.lifecycle_signal,
+      processedTotalsByCurrency,
     },
     bucketSummaries: summarizeBuckets(payoutIntents, allocationRule),
     latestReceiptBucketSummaries: summarizeBuckets(
@@ -138,6 +204,98 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       allocationRule
     ),
   };
+}
+
+export function getEventRouteKind(event: RevenueEvent): RevenueRouteKind {
+  if (event.eventContext?.routeKind) {
+    return event.eventContext.routeKind;
+  }
+
+  if (event.type === "subscription.active" || event.type === "subscription.renewed") {
+    return "recurring_route";
+  }
+
+  if (
+    event.type === "credit.added" ||
+    event.type === "credit.deducted" ||
+    event.type === "credit.balance_low"
+  ) {
+    return "budget_signal";
+  }
+
+  if (event.type === "subscription.cancelled" || event.type === "subscription.updated") {
+    return "lifecycle_signal";
+  }
+
+  return "revenue_route";
+}
+
+export function getEventRouteKindLabel(kind: RevenueRouteKind) {
+  switch (kind) {
+    case "revenue_route":
+      return "revenue route";
+    case "recurring_route":
+      return "recurring route";
+    case "budget_signal":
+      return "budget signal";
+    case "lifecycle_signal":
+      return "lifecycle signal";
+  }
+}
+
+export function getEventSummary(event: RevenueEvent) {
+  if (event.eventContext?.summary) {
+    return event.eventContext.summary;
+  }
+
+  switch (event.type) {
+    case "payment.succeeded":
+      return "One-time payment revenue entered the treasury pipeline.";
+    case "subscription.active":
+      return "Subscription revenue route created for a newly active customer.";
+    case "subscription.renewed":
+      return "Recurring subscription renewal routed into treasury buckets.";
+    case "subscription.cancelled":
+      return "Subscription stopped. No new payout route was generated.";
+    case "subscription.updated":
+      return "Subscription fields changed. Founder review only.";
+    case "credit.added":
+      return "Credits were added and routed into the AI budget bucket.";
+    case "credit.deducted":
+      return "Credits were consumed; this is a budget usage signal.";
+    case "credit.balance_low":
+      return "Credit balance is below threshold and needs review.";
+    default:
+      return event.type;
+  }
+}
+
+export function getReceiptSettlementLabel(statuses: string[]) {
+  if (statuses.length === 0) {
+    return "no payout route";
+  }
+
+  if (statuses.every((status) => status === "confirmed")) {
+    return "confirmed";
+  }
+
+  if (statuses.some((status) => status === "quarantined")) {
+    return "quarantined";
+  }
+
+  if (statuses.some((status) => status === "rejected")) {
+    return "approval blocked";
+  }
+
+  if (statuses.some((status) => status === "submitted")) {
+    return "submitting";
+  }
+
+  if (statuses.some((status) => status === "failed")) {
+    return "partial failure";
+  }
+
+  return "pending settlement";
 }
 
 export function formatMoney(cents: number, currency: string) {

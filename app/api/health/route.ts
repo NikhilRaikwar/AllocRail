@@ -18,7 +18,6 @@ export function GET() {
       solanaUsdcMint: env.config.solanaUsdcMint,
       hasDodoApiKey: env.config.hasDodoApiKey,
       hasDodoWebhookSecret: env.config.hasDodoWebhookSecret,
-      hasTreasurySigner: env.config.hasTreasurySigner,
       hasSupabase: env.config.hasSupabase,
       allocRailProgramId: env.config.allocRailProgramId,
     },

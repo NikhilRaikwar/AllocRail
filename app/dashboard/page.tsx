@@ -3,6 +3,10 @@ import {
   formatMoney,
   formatTimestamp,
   getDashboardSnapshot,
+  getEventRouteKind,
+  getEventRouteKindLabel,
+  getEventSummary,
+  getReceiptSettlementLabel,
   shortId,
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
@@ -35,29 +39,60 @@ export default async function DashboardOverviewPage() {
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span
-              className={styles.statLabelDot}
-              style={{ background: "var(--green)" }}
-            />
+            <span className={styles.statLabelDot} style={{ background: "var(--green)" }} />
             Revenue Processed
           </div>
-          <div className={styles.statValue} style={{ color: "var(--green)" }}>
-            {snapshot.metrics.eventCount > 0
-              ? formatMoney(
-                  snapshot.metrics.totalProcessedCents,
-                  snapshot.metrics.totalProcessedCurrency
-                )
-              : "Rs 0.00"}
-          </div>
-          <div className={styles.statSub}>{snapshot.metrics.eventCount} events</div>
+          {snapshot.metrics.processedTotalsByCurrency.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
+              {snapshot.metrics.processedTotalsByCurrency.map((entry, index) => (
+                <div key={entry.currency}>
+                  <div
+                    className={styles.statValue}
+                    style={{
+                      color: index === 0 ? "var(--green)" : "var(--ink)",
+                      fontSize: index === 0 ? 28 : 22,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {formatMoney(entry.totalCents, entry.currency)}
+                  </div>
+                  <div className={styles.statSub}>{entry.currency} · {entry.eventCount} events</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.statValue} style={{ color: "var(--green)" }}>
+              Rs 0.00
+            </div>
+          )}
+          <div className={styles.statSub}>{snapshot.metrics.revenueRouteCount} one-time routes</div>
         </div>
 
         <div className={styles.statCard}>
           <div className={styles.statLabel}>
-            <span
-              className={styles.statLabelDot}
-              style={{ background: "var(--amber)" }}
-            />
+            <span className={styles.statLabelDot} style={{ background: "var(--purple)" }} />
+            Recurring Routes
+          </div>
+          <div className={styles.statValue} style={{ color: "var(--purple)" }}>
+            {snapshot.metrics.recurringRouteCount}
+          </div>
+          <div className={styles.statSub}>subscription cycles with payout routes</div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>
+            <span className={styles.statLabelDot} style={{ background: "var(--blue)" }} />
+            Budget Signals
+          </div>
+          <div className={styles.statValue} style={{ color: "var(--blue)" }}>
+            {snapshot.metrics.budgetSignalCount}
+          </div>
+          <div className={styles.statSub}>credits added, used, low balance</div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>
+            <span className={styles.statLabelDot} style={{ background: "var(--amber)" }} />
             Pending Intents
           </div>
           <div className={styles.statValue} style={{ color: "var(--amber)" }}>
@@ -67,34 +102,6 @@ export default async function DashboardOverviewPage() {
             {snapshot.metrics.latestReceiptPendingApprovalCount} require approval
           </div>
         </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>
-            <span
-              className={styles.statLabelDot}
-              style={{ background: "var(--blue)" }}
-            />
-            Webhook Status
-          </div>
-          <div className={styles.statValue} style={{ color: "var(--blue)" }}>
-            {snapshot.webhookReady ? "Ready" : "Missing"}
-          </div>
-          <div className={styles.statSub}>Dodo signature check</div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>
-            <span
-              className={styles.statLabelDot}
-              style={{ background: "var(--purple)" }}
-            />
-            Receipts Generated
-          </div>
-          <div className={styles.statValue} style={{ color: "var(--purple)" }}>
-            {snapshot.metrics.receiptCount}
-          </div>
-          <div className={styles.statSub}>stored route snapshots</div>
-        </div>
       </div>
 
       <div className={styles.contentGrid}>
@@ -103,128 +110,140 @@ export default async function DashboardOverviewPage() {
             <div className={styles.cardHeader}>
               <div>
                 <div className={styles.cardEyebrow}>latest event</div>
-                <div className={styles.cardTitle}>Verified Revenue Event</div>
+                <div className={styles.cardTitle}>Latest Dodo Event</div>
               </div>
               {latestEvent ? (
-                <span className={`${styles.tag} ${styles.tagGreen}`}>
-                  {latestEvent.type}
-                </span>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <span
+                    className={`${styles.tag} ${
+                      latestEvent.type.startsWith("subscription.")
+                        ? styles.tagPurple
+                        : latestEvent.type.startsWith("credit.")
+                          ? styles.tagBlue
+                          : styles.tagGreen
+                    }`}
+                  >
+                    {latestEvent.type}
+                  </span>
+                  <span
+                    className={`${styles.tag} ${
+                      getEventRouteKind(latestEvent) === "revenue_route"
+                        ? styles.tagGreen
+                        : getEventRouteKind(latestEvent) === "recurring_route"
+                          ? styles.tagPurple
+                          : getEventRouteKind(latestEvent) === "budget_signal"
+                            ? styles.tagBlue
+                            : styles.tagAmber
+                    }`}
+                  >
+                    {getEventRouteKindLabel(getEventRouteKind(latestEvent))}
+                  </span>
+                </div>
               ) : (
                 <span className={`${styles.tag} ${styles.tagMuted}`}>waiting</span>
               )}
             </div>
             <div className={styles.cardBody}>
-              {latestEvent && allocationRule ? (
+              {latestEvent ? (
                 <>
                   <div className={styles.overviewGrid}>
+                    <InfoBlock label="Payment ID" value={latestEvent.dodoPaymentId ?? "-"} />
                     <InfoBlock
-                      label="Payment ID"
-                      value={latestEvent.dodoPaymentId}
-                    />
-                    <InfoBlock
-                      label="Checkout Session"
-                      value={latestEvent.checkoutSessionId}
+                      label="Subscription"
+                      value={latestEvent.dodoSubscriptionId ?? "-"}
                     />
                     <div>
                       <div className={styles.miniLabel}>Amount</div>
                       <div
                         className={styles.statValue}
-                        style={{
-                          fontSize: 20,
-                          marginBottom: 0,
-                          color: "var(--green)",
-                        }}
+                        style={{ fontSize: 20, marginBottom: 0, color: "var(--green)" }}
                       >
-                        {formatMoney(
-                          latestEvent.amountCents,
-                          latestEvent.currency
-                        )}
+                        {formatMoney(latestEvent.amountCents, latestEvent.currency)}
                       </div>
                     </div>
-                    <InfoBlock label="Rule Used" value={allocationRule.id} />
+                    <InfoBlock
+                      label="Route Kind"
+                      value={getEventRouteKindLabel(getEventRouteKind(latestEvent))}
+                    />
                     <InfoBlock
                       label="Received At"
                       value={formatTimestamp(latestEvent.receivedAt)}
                     />
-                    <div>
-                      <div className={styles.miniLabel}>Webhook Status</div>
-                      <div
-                        style={{ display: "flex", alignItems: "center", gap: 6 }}
-                      >
-                        <span
-                          className={styles.pip}
-                          style={{ width: 6, height: 6 }}
-                        />
-                        <span className={`${styles.tag} ${styles.tagGreen}`}>
-                          verified
-                        </span>
+                    <InfoBlock
+                      label="Context"
+                      value={
+                        latestEvent.creditEntitlementName ??
+                        latestEvent.eventContext?.subscriptionStatus ??
+                        latestEvent.checkoutSessionId ??
+                        "-"
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.infoPanel} style={{ marginBottom: latestReceipt ? 16 : 0 }}>
+                    <div className={styles.infoPanelTitle}>Founder-facing meaning</div>
+                    <div className={styles.infoPanelText}>{getEventSummary(latestEvent)}</div>
+                  </div>
+
+                  {latestReceipt && allocationRule ? (
+                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                      <div className={styles.miniLabel} style={{ marginBottom: 12 }}>
+                        Allocation Breakdown
                       </div>
-                    </div>
-                  </div>
+                      {snapshot.latestReceiptBucketSummaries.map((bucket) => {
+                        const percent = Math.round(bucket.percentageBps / 100);
+                        const colorMap: Record<string, string> = {
+                          contractor_escrow: "var(--green)",
+                          tax_reserve: "var(--amber)",
+                          founder_share: "var(--purple)",
+                          agent_budget: "var(--blue)",
+                        };
+                        const barClassMap: Record<string, string> = {
+                          contractor_escrow: styles.barGreen,
+                          tax_reserve: styles.barAmber,
+                          founder_share: styles.barPurple,
+                          agent_budget: styles.barBlue,
+                        };
+                        const dotClassMap: Record<string, string> = {
+                          contractor_escrow: styles.dotGreen,
+                          tax_reserve: styles.dotAmber,
+                          founder_share: styles.dotPurple,
+                          agent_budget: styles.dotBlue,
+                        };
 
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-                    <div className={styles.miniLabel} style={{ marginBottom: 12 }}>
-                      Allocation Breakdown
-                    </div>
-                    {snapshot.latestReceiptBucketSummaries.map((bucket) => {
-                      const percent = Math.round(bucket.percentageBps / 100);
-                      const colorMap: Record<string, string> = {
-                        contractor_escrow: "var(--green)",
-                        tax_reserve: "var(--amber)",
-                        founder_share: "var(--purple)",
-                        agent_budget: "var(--blue)",
-                      };
-                      const barClassMap: Record<string, string> = {
-                        contractor_escrow: styles.barGreen,
-                        tax_reserve: styles.barAmber,
-                        founder_share: styles.barPurple,
-                        agent_budget: styles.barBlue,
-                      };
-                      const dotClassMap: Record<string, string> = {
-                        contractor_escrow: styles.dotGreen,
-                        tax_reserve: styles.dotAmber,
-                        founder_share: styles.dotPurple,
-                        agent_budget: styles.dotBlue,
-                      };
-
-                      return (
-                        <div className={styles.allocSection} key={bucket.kind}>
-                          <div className={styles.allocRowHeader}>
-                            <div className={styles.allocNameRow}>
-                              <span
-                                className={`${styles.intentDot} ${dotClassMap[bucket.kind]}`}
-                              />
-                              <div className={styles.allocName}>{bucket.label}</div>
+                        return (
+                          <div className={styles.allocSection} key={bucket.kind}>
+                            <div className={styles.allocRowHeader}>
+                              <div className={styles.allocNameRow}>
+                                <span className={`${styles.intentDot} ${dotClassMap[bucket.kind]}`} />
+                                <div className={styles.allocName}>{bucket.label}</div>
+                              </div>
+                              <span className={styles.allocPct} style={{ color: colorMap[bucket.kind] }}>
+                                {percent}% · {formatMoney(bucket.amountCents, "USDC")}
+                              </span>
                             </div>
-                            <span
-                              className={styles.allocPct}
-                              style={{ color: colorMap[bucket.kind] }}
-                            >
-                              {percent}% · {formatMoney(bucket.amountCents, "USDC")}
-                            </span>
+                            <div className={styles.barTrack}>
+                              <div
+                                className={`${styles.barFill} ${barClassMap[bucket.kind]}`}
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className={styles.barTrack}>
-                            <div
-                              className={`${styles.barFill} ${barClassMap[bucket.kind]}`}
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <div className={styles.emptyState}>
-                  No real revenue event yet. Complete a Dodo checkout and replay
-                  the webhook.
+                  No Dodo event yet. Complete a checkout or replay a supported webhook.
                 </div>
               )}
             </div>
             <div className={styles.footer}>
-              <span className={styles.footerLabel}>total bps validated</span>
+              <span className={styles.footerLabel}>lifecycle signals</span>
               <span className={styles.footerValue}>
-                {allocationRule ? "10,000 / 10,000 OK" : "waiting for data"}
+                {snapshot.metrics.lifecycleSignalCount} founder review only
               </span>
             </div>
           </div>
@@ -248,9 +267,7 @@ export default async function DashboardOverviewPage() {
                   const ruleBucket = allocationRule?.buckets.find(
                     (bucket) => bucket.kind === intent.bucketKind
                   );
-                  const percent = ruleBucket
-                    ? Math.round(ruleBucket.percentageBps / 100)
-                    : 0;
+                  const percent = ruleBucket ? Math.round(ruleBucket.percentageBps / 100) : 0;
                   const colorClass =
                     intent.bucketKind === "contractor_escrow"
                       ? styles.dotGreen
@@ -265,8 +282,7 @@ export default async function DashboardOverviewPage() {
                       <span className={`${styles.intentDot} ${colorClass}`} />
                       <div className={styles.intentInfo}>
                         <div className={styles.intentLabel}>
-                          {ruleBucket?.label ??
-                            intent.bucketKind.replaceAll("_", " ")}
+                          {ruleBucket?.label ?? intent.bucketKind.replaceAll("_", " ")}
                         </div>
                         <div className={styles.intentWallet}>
                           {shortId(intent.recipientWallet, 10, 4)}
@@ -316,20 +332,42 @@ export default async function DashboardOverviewPage() {
                 <div className={styles.cardEyebrow}>dodo webhooks</div>
                 <div className={styles.cardTitle}>Event Feed</div>
               </div>
-              <span className={`${styles.tag} ${styles.tagGreen}`}>live</span>
+              <span className={`${styles.tag} ${snapshot.webhookReady ? styles.tagGreen : styles.tagRed}`}>
+                {snapshot.webhookReady ? "live" : "missing secret"}
+              </span>
             </div>
             <div className={styles.cardBodyFlush}>
               {snapshot.events.length > 0 ? (
-                snapshot.events.slice(0, 3).map((event, index) => (
+                snapshot.events.slice(0, 4).map((event, index) => (
                   <div className={styles.whItem} key={event.id}>
-                    <span className={styles.whTypePill}>{event.type}</span>
+                    <span
+                      className={styles.whTypePill}
+                      style={{
+                        background:
+                          getEventRouteKind(event) === "recurring_route"
+                            ? "var(--purple-pale)"
+                            : getEventRouteKind(event) === "budget_signal"
+                              ? "var(--blue-pale)"
+                              : getEventRouteKind(event) === "lifecycle_signal"
+                                ? "var(--amber-pale)"
+                                : "var(--green-pale)",
+                        color:
+                          getEventRouteKind(event) === "recurring_route"
+                            ? "var(--purple)"
+                            : getEventRouteKind(event) === "budget_signal"
+                              ? "var(--blue)"
+                              : getEventRouteKind(event) === "lifecycle_signal"
+                                ? "var(--amber)"
+                                : "var(--green)",
+                      }}
+                    >
+                      {event.type}
+                    </span>
                     <div className={styles.whDetails}>
                       <div className={styles.whId}>{shortId(event.id, 10, 4)}</div>
-                      <div className={styles.whRule}>{event.metadata.rule_id}</div>
+                      <div className={styles.whRule}>{getEventRouteKindLabel(getEventRouteKind(event))}</div>
                     </div>
-                    <span className={styles.whTime}>
-                      {index === 0 ? "latest" : `${index} old`}
-                    </span>
+                    <span className={styles.whTime}>{index === 0 ? "latest" : `${index} old`}</span>
                   </div>
                 ))
               ) : (
@@ -342,15 +380,9 @@ export default async function DashboardOverviewPage() {
             <div className={styles.cardHeader}>
               <div>
                 <div className={styles.cardEyebrow}>active rule</div>
-                <div className={styles.cardTitle}>
-                  {allocationRule?.name ?? "No live rule yet"}
-                </div>
+                <div className={styles.cardTitle}>{allocationRule?.name ?? "No live rule yet"}</div>
               </div>
-              <span
-                className={`${styles.tag} ${
-                  allocationRule ? styles.tagGreen : styles.tagMuted
-                }`}
-              >
+              <span className={`${styles.tag} ${allocationRule ? styles.tagGreen : styles.tagMuted}`}>
                 {allocationRule ? "enabled" : "waiting"}
               </span>
             </div>
@@ -360,20 +392,10 @@ export default async function DashboardOverviewPage() {
                   <div className={styles.miniLabel} style={{ marginBottom: 8 }}>
                     {allocationRule.id}
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      marginBottom: 14,
-                    }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                     <DataPair label="Workspace" value={allocationRule.workspaceId} />
                     <DataPair label="Merchant" value={allocationRule.merchantId} />
-                    <DataPair
-                      label="Product tag"
-                      value={allocationRule.productTag ?? "n/a"}
-                    />
+                    <DataPair label="Product tag" value={allocationRule.productTag ?? "n/a"} />
                     <DataPair
                       label="Daily limit"
                       value={formatMoney(allocationRule.dailyLimitCents, "USD")}
@@ -388,9 +410,7 @@ export default async function DashboardOverviewPage() {
             <div className={styles.footer}>
               <span className={styles.footerLabel}>buckets</span>
               <span className={styles.footerValue}>
-                {allocationRule
-                  ? `${allocationRule.buckets.length} configured`
-                  : "waiting for data"}
+                {allocationRule ? `${allocationRule.buckets.length} configured` : "waiting for data"}
               </span>
             </div>
           </div>
@@ -406,81 +426,47 @@ export default async function DashboardOverviewPage() {
             <div className={styles.cardBody}>
               {latestReceipt ? (
                 <>
-                  <div
-                    className={styles.mono}
-                    style={{
-                      fontSize: 11,
-                      marginBottom: 10,
-                      color: "var(--ink-muted)",
-                    }}
-                  >
+                  <div className={styles.mono} style={{ fontSize: 11, marginBottom: 10, color: "var(--ink-muted)" }}>
                     {latestReceipt.id}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                     <DataPair
                       label="Dodo event"
-                      value={
-                        <span className={`${styles.tag} ${styles.tagGreen}`}>
-                          {latestReceipt.revenueEvent.type}
-                        </span>
-                      }
+                      value={<span className={`${styles.tag} ${styles.tagGreen}`}>{latestReceipt.revenueEvent.type}</span>}
                     />
-                    <DataPair
-                      label="Intents"
-                      value={`${latestReceipt.payoutIntents.length} generated`}
-                    />
+                    <DataPair label="Intents" value={`${latestReceipt.payoutIntents.length} generated`} />
                     <DataPair
                       label="Solana settlement"
                       value={
                         <span
                           className={`${styles.tag} ${
-                            latestReceipt.payoutIntents.some(
-                              (intent) => intent.status === "quarantined"
-                            )
+                            getReceiptSettlementLabel(
+                              latestReceipt.payoutIntents.map((intent) => intent.status)
+                            ) === "quarantined"
                               ? styles.tagRed
-                              : latestReceipt.payoutIntents.every(
-                                    (intent) => intent.status === "confirmed"
-                                  )
+                              : getReceiptSettlementLabel(
+                                    latestReceipt.payoutIntents.map((intent) => intent.status)
+                                  ) === "confirmed"
                                 ? styles.tagBlue
-                                : latestReceipt.payoutIntents.some(
-                                      (intent) => intent.status === "confirmed"
-                                    )
-                                  ? styles.tagAmber
-                                  : styles.tagMuted
+                                : getReceiptSettlementLabel(
+                                      latestReceipt.payoutIntents.map((intent) => intent.status)
+                                    ) === "approval blocked"
+                                  ? styles.tagRed
+                                  : styles.tagAmber
                           }`}
                         >
-                          {latestReceipt.payoutIntents.some(
-                            (intent) => intent.status === "quarantined"
-                          )
-                            ? "quarantined"
-                            : latestReceipt.payoutIntents.every(
-                              (intent) => intent.status === "confirmed"
-                            )
-                              ? "confirmed"
-                            : latestReceipt.payoutIntents.some(
-                                  (intent) => intent.status === "rejected"
-                                )
-                              ? "approval blocked"
-                            : latestReceipt.payoutIntents.some(
-                                  (intent) => intent.status === "confirmed"
-                                )
-                              ? "partial"
-                              : "pending"}
+                          {getReceiptSettlementLabel(
+                            latestReceipt.payoutIntents.map((intent) => intent.status)
+                          )}
                         </span>
                       }
                     />
                     <DataPair
                       label="Explorer"
                       value={
-                        latestReceipt.payoutIntents.find(
-                          (intent) => intent.explorerUrl
-                        ) ? (
+                        latestReceipt.payoutIntents.find((intent) => intent.explorerUrl) ? (
                           <a
-                            href={
-                              latestReceipt.payoutIntents.find(
-                                (intent) => intent.explorerUrl
-                              )?.explorerUrl
-                            }
+                            href={latestReceipt.payoutIntents.find((intent) => intent.explorerUrl)?.explorerUrl}
                             target="_blank"
                             rel="noreferrer"
                             className={styles.explorerLink}
@@ -505,13 +491,7 @@ export default async function DashboardOverviewPage() {
   );
 }
 
-function LinkButton({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
+function LinkButton({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a href={href} className={styles.secondaryButton}>
       {children}
@@ -540,12 +520,9 @@ function DataPair({
   emphasize?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, gap: 10 }}>
       <span className={styles.muted}>{label}</span>
-      <span
-        className={styles.mono}
-        style={emphasize ? { color: "var(--green)" } : undefined}
-      >
+      <span className={styles.mono} style={emphasize ? { color: "var(--green)" } : undefined}>
         {value}
       </span>
     </div>

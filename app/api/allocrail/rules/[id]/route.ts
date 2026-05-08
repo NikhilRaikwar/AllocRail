@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  deleteAllocationRule,
   getAllocationRuleById,
   upsertAllocationRule,
 } from "@/app/lib/allocrail/event-store";
@@ -106,4 +107,38 @@ export async function PATCH(
   });
 
   return NextResponse.json({ ok: true, rule });
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await requireCurrentFounder();
+  const { id } = await params;
+  const existing = await getAllocationRuleById(id);
+
+  if (!existing) {
+    return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+  }
+
+  try {
+    await deleteAllocationRule(id);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to delete rule";
+    const conflict =
+      message.includes("receipts_allocation_rule_id_fkey") ||
+      message.includes("allocation_rule_id");
+
+    return NextResponse.json(
+      {
+        error: conflict
+          ? "This rule already has treasury history. Disable or edit it instead of deleting it."
+          : message,
+      },
+      { status: conflict ? 409 : 400 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
 }

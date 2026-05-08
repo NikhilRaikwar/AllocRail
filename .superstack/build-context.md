@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Expand Dodo semantic handling for subscription lifecycle and credit events.
-2. Add verified wallet-to-founder binding before treasury execution.
-3. Design treasury refill / FX source architecture for production.
-4. Package Milestone 7 and submission-quality polish.
+1. Build Milestone 8 AI treasury copilot.
+2. Tighten founder-facing demo flow and submission narrative.
+3. Decide whether to move from server treasury signer to founder-signed or policy-vault execution.
+4. Package Milestone 9 submission-quality polish.
 
 ## Build Status
 
@@ -143,6 +143,21 @@ Current verification:
 
 Current known constraints:
 
-- Wallet connection is still not cryptographically bound to the authenticated founder profile.
-- Treasury USDC remains pre-funded; automatic INR/USD settlement-to-USDC refill architecture is not implemented.
-- Milestone 7 still needs deeper Dodo semantic coverage for subscriptions and credit events.
+- Wallet binding now exists, but high-risk actions still rely on a bound wallet header match rather than per-action wallet signatures.
+- Treasury USDC remains pre-funded in demo mode; refill mode and FX source are explicit founder settings, not a live exchange integration.
+
+Milestone 7: deeper Dodo semantics plus hardening closeout.
+  - Added subscription lifecycle coverage for `subscription.active`, `subscription.renewed`, `subscription.cancelled`, and `subscription.updated`.
+  - Added credit-event coverage for `credit.added`, `credit.deducted`, and `credit.balance_low`.
+  - Simplified founder flow so one billing cycle produces one actionable payout route, with lifecycle and budget events stored as signals.
+  - Added duplicate recurring-route suppression for activation/renewal overlap.
+  - Added customer-based metadata fallback for Dodo credit events lacking direct references.
+  - Added cryptographic treasury operator wallet binding via wallet-standard `signMessage`.
+  - Added founder-managed treasury refill mode and FX source configuration persisted in Supabase.
+  - Updated payout approvals/rejections/execution to require the bound wallet address.
+
+Current verification:
+
+- `npm run build`: passing.
+- Live Supabase schema updated for wallet binding and treasury config.
+- Real Dodo subscription lifecycle and `credit.added` events now flow into founder-visible signal handling without creating duplicate or zero-value payout routes.
