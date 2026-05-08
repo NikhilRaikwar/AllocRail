@@ -4,6 +4,7 @@ import {
   updatePayoutIntent,
 } from "@/app/lib/allocrail/event-store";
 import { executeUsdcPayout } from "@/app/lib/allocrail/settlement";
+import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,7 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await requireCurrentFounder();
   const { id } = await params;
   const intent = await getPayoutIntentById(id);
 

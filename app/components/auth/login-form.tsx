@@ -100,7 +100,7 @@ export function LoginForm({ next }: { next: string }) {
               id="login-password"
               type={showPassword ? "text" : "password"}
               className={`${styles.input} ${styles.inputPassword}`}
-              placeholder="••••••••••••"
+              placeholder="************"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
@@ -113,7 +113,7 @@ export function LoginForm({ next }: { next: string }) {
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? "🙈" : "👁"}
+              {showPassword ? "Hide" : "Show"}
             </button>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function LoginForm({ next }: { next: string }) {
             disabled
             title="Phantom connect stays inside the dashboard"
           >
-            <span className={styles.socialBtnIcon}>◎</span>
+            <span className={styles.socialBtnIcon}>Ph</span>
             Phantom
           </button>
         </div>

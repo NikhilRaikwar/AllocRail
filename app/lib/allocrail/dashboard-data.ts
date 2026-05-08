@@ -21,6 +21,39 @@ type BucketSummary = {
   pendingApproval: number;
 };
 
+function isOpenIntent(intent: PayoutIntent) {
+  return (
+    intent.status === "draft" ||
+    intent.status === "pending_approval" ||
+    intent.status === "approved" ||
+    intent.status === "submitted" ||
+    intent.status === "failed" ||
+    intent.status === "quarantined"
+  );
+}
+
+function summarizeBuckets(
+  sourceIntents: PayoutIntent[],
+  allocationRule: AllocationRule | null
+): BucketSummary[] {
+  return (allocationRule?.buckets ?? []).map((bucket) => {
+    const matching = sourceIntents.filter(
+      (intent) => intent.bucketKind === bucket.kind
+    );
+
+    return {
+      kind: bucket.kind,
+      label: bucket.label,
+      percentageBps: bucket.percentageBps,
+      count: matching.length,
+      amountCents: matching.reduce((sum, intent) => sum + intent.amountCents, 0),
+      pendingApproval: matching.filter(
+        (intent) => intent.status === "pending_approval"
+      ).length,
+    };
+  });
+}
+
 export type DashboardSnapshot = {
   allocationRules: AllocationRule[];
   events: RevenueEvent[];
@@ -37,8 +70,16 @@ export type DashboardSnapshot = {
     pendingApprovalCount: number;
     latestAmountCents: number;
     latestCurrency: string;
+    totalProcessedCents: number;
+    totalProcessedCurrency: string;
+    activeIntentCount: number;
+    activeQueuedCents: number;
+    latestReceiptIntentCount: number;
+    latestReceiptPendingApprovalCount: number;
+    latestReceiptQueuedCents: number;
   };
   bucketSummaries: BucketSummary[];
+  latestReceiptBucketSummaries: BucketSummary[];
 };
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
@@ -51,6 +92,12 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   const latestReceipt = receipts[0] ?? null;
   const latestEvent = events[0] ?? null;
   const allocationRule = latestReceipt?.allocationRule ?? allocationRules[0] ?? null;
+  const latestReceiptIntents = latestReceipt?.payoutIntents ?? [];
+  const activeIntents = payoutIntents.filter(isOpenIntent);
+  const totalProcessedCents = events.reduce(
+    (sum, event) => sum + event.amountCents,
+    0
+  );
 
   return {
     allocationRules,
@@ -70,23 +117,26 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       ).length,
       latestAmountCents: latestEvent?.amountCents ?? 0,
       latestCurrency: latestEvent?.currency ?? "USD",
+      totalProcessedCents,
+      totalProcessedCurrency: latestEvent?.currency ?? "USD",
+      activeIntentCount: activeIntents.length,
+      activeQueuedCents: activeIntents.reduce(
+        (sum, intent) => sum + intent.amountCents,
+        0
+      ),
+      latestReceiptIntentCount: latestReceiptIntents.length,
+      latestReceiptPendingApprovalCount: latestReceiptIntents.filter(
+        (intent) => intent.status === "pending_approval"
+      ).length,
+      latestReceiptQueuedCents: latestReceiptIntents
+        .filter(isOpenIntent)
+        .reduce((sum, intent) => sum + intent.amountCents, 0),
     },
-    bucketSummaries: (allocationRule?.buckets ?? []).map((bucket) => {
-      const matching = payoutIntents.filter(
-        (intent) => intent.bucketKind === bucket.kind
-      );
-
-      return {
-        kind: bucket.kind,
-        label: bucket.label,
-        percentageBps: bucket.percentageBps,
-        count: matching.length,
-        amountCents: matching.reduce((sum, intent) => sum + intent.amountCents, 0),
-        pendingApproval: matching.filter(
-          (intent) => intent.status === "pending_approval"
-        ).length,
-      };
-    }),
+    bucketSummaries: summarizeBuckets(payoutIntents, allocationRule),
+    latestReceiptBucketSummaries: summarizeBuckets(
+      latestReceiptIntents,
+      allocationRule
+    ),
   };
 }
 

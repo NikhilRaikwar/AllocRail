@@ -2,8 +2,8 @@
 phase: scaffold
 completed_at: 2026-05-04T20:15:00+05:30
 project: AllocRail
-mvp_complete: false
-tests_passing: false
+mvp_complete: true
+tests_passing: true
 devnet_deployed: false
 ---
 
@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Add founder rule create/edit flows for allocation buckets and recipient wallets.
-2. Add stricter approval controls, approver identity capture, and audit guardrails.
-3. Expand Dodo semantic handling for subscriptions, credits, and refunds.
-4. Tighten workspace ownership and membership around authenticated founders.
+1. Expand Dodo semantic handling for subscription lifecycle and credit events.
+2. Add verified wallet-to-founder binding before treasury execution.
+3. Design treasury refill / FX source architecture for production.
+4. Package Milestone 7 and submission-quality polish.
 
 ## Build Status
 
@@ -117,12 +117,32 @@ Current known constraints:
   - Added payout-intent lifecycle transitions for `pending_approval`, `approved`, `submitted`, `confirmed`, and `failed`.
   - Added `POST /api/allocrail/payout-intents/[id]/approve` and `POST /api/allocrail/payout-intents/[id]/execute`.
   - Added Supabase persistence for allocation rules, webhook idempotency, revenue events, payout intents, and receipts.
-  - Added schema migration at `supabase/migrations/20260507_allocrail_milestone_5.sql`.
+  - Added base durable schema migration and later Milestone 6 / receipt / RLS follow-up migrations under `supabase/migrations/`.
   - Updated dashboard and CSV export paths to read durable state from Supabase.
   - Added Supabase auth pages and dashboard protection for founder access.
   - Verified persisted payout intents, receipts, and confirmed Solana devnet USDC transfers with explorer-linked proof.
 
+Milestone 6: approval controls and safety guardrails.
+  - Added founder-managed rule editing and wallet recipient management.
+  - Added founder profile settings backed by Supabase auth metadata and founder profile rows.
+  - Added `POST /api/allocrail/payout-intents/[id]/reject`.
+  - Added founder identity capture for approvals, rejections, and execution gating.
+  - Added refund and dispute-aware quarantine logic for open payout routes.
+  - Added founder refund request flow from the Revenue Events inbox.
+  - Added grouped payout routes by payment ID / receipt / checkout session with route filters.
+  - Added Dodo payment receipt, Dodo refund receipt, and AllocRail audit receipt downloads.
+  - Added receipt detail document rendering and route-level audit snapshots.
+  - Added Supabase founder/workspace RLS and receipt/refund metadata migrations.
+
+Current verification:
+
+- `npm run build`: passing.
+- Real Dodo checkout -> verified webhook -> payout intents -> Solana devnet USDC settlement path works.
+- Refund request flow is wired to Dodo and blocks open payout intents.
+- Dispute / refund hold logic moves matching open intents into `quarantined`.
+
 Current known constraints:
 
-- Workspace membership and founder-managed rule editing are still not implemented; wallet connect remains a treasury utility only.
-- Allocation rules are persisted and resolved from Supabase, but founder create/edit flows in the UI still belong to the next milestone.
+- Wallet connection is still not cryptographically bound to the authenticated founder profile.
+- Treasury USDC remains pre-funded; automatic INR/USD settlement-to-USDC refill architecture is not implemented.
+- Milestone 7 still needs deeper Dodo semantic coverage for subscriptions and credit events.

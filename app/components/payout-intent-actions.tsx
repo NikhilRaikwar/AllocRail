@@ -22,6 +22,8 @@ export function PayoutIntentActions({ intent }: { intent: PayoutIntent }) {
   const [error, setError] = useState<string | null>(null);
 
   const showApprove = intent.status === "pending_approval";
+  const showReject =
+    intent.status === "pending_approval" || intent.status === "approved";
   const showExecute =
     intent.status === "approved" ||
     (!intent.requiresApproval && intent.status === "draft") ||
@@ -49,6 +51,16 @@ export function PayoutIntentActions({ intent }: { intent: PayoutIntent }) {
           onClick={() => run(`/api/allocrail/payout-intents/${intent.id}/approve`)}
         >
           {isPending ? "Approving..." : "Approve"}
+        </button>
+      ) : null}
+      {showReject ? (
+        <button
+          type="button"
+          className={styles.inlineAction}
+          disabled={isPending}
+          onClick={() => run(`/api/allocrail/payout-intents/${intent.id}/reject`)}
+        >
+          {isPending ? "Rejecting..." : "Reject"}
         </button>
       ) : null}
       {showExecute ? (

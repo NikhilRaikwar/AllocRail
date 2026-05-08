@@ -7,6 +7,7 @@ import type {
   DodoRoutingMetadata,
   PayoutIntent,
   RevenueEvent,
+  PayoutIntentStatus,
 } from "./types";
 
 type EventStoreState = {
@@ -30,6 +31,11 @@ type RevenueEventRow = {
   dodo_payment_id: string | null;
   dodo_subscription_id: string | null;
   checkout_session_id: string | null;
+  dodo_refund_id: string | null;
+  dodo_refund_status: string | null;
+  refund_reason: string | null;
+  refund_requested_at: string | null;
+  refunded_at: string | null;
   type: RevenueEvent["type"];
   amount_cents: number | string;
   currency: string;
@@ -45,7 +51,13 @@ type PayoutIntentRow = {
   amount_cents: number | string;
   currency: "USDC";
   requires_approval: boolean;
-  status: PayoutIntent["status"];
+  status: PayoutIntentStatus;
+  approved_by_user_id: string | null;
+  approved_by_name: string | null;
+  approved_at: string | null;
+  rejected_by_user_id: string | null;
+  rejected_by_name: string | null;
+  rejected_at: string | null;
   solana_cluster: string | null;
   solana_signature: string | null;
   explorer_url: string | null;
@@ -65,6 +77,8 @@ type AllocationRuleRow = {
   daily_limit_cents: number | string;
   enabled: boolean;
   buckets: AllocationBucket[];
+  created_by_user_id: string | null;
+  updated_by_user_id: string | null;
 };
 
 const MAX_EVENTS = 50;
@@ -110,6 +124,8 @@ function mapRuleRow(row: AllocationRuleRow): AllocationRule {
     dailyLimitCents: toNumber(row.daily_limit_cents),
     enabled: row.enabled,
     buckets: Array.isArray(row.buckets) ? row.buckets : [],
+    createdByUserId: row.created_by_user_id ?? undefined,
+    updatedByUserId: row.updated_by_user_id ?? undefined,
   };
 }
 
@@ -120,6 +136,11 @@ function mapRevenueEventRow(row: RevenueEventRow): RevenueEvent {
     dodoPaymentId: row.dodo_payment_id ?? undefined,
     dodoSubscriptionId: row.dodo_subscription_id ?? undefined,
     checkoutSessionId: row.checkout_session_id ?? undefined,
+    dodoRefundId: row.dodo_refund_id ?? undefined,
+    dodoRefundStatus: row.dodo_refund_status ?? undefined,
+    refundReason: row.refund_reason ?? undefined,
+    refundRequestedAt: row.refund_requested_at ?? undefined,
+    refundedAt: row.refunded_at ?? undefined,
     type: row.type,
     amountCents: toNumber(row.amount_cents),
     currency: row.currency,
@@ -138,6 +159,12 @@ function mapPayoutIntentRow(row: PayoutIntentRow): PayoutIntent {
     currency: row.currency,
     requiresApproval: row.requires_approval,
     status: row.status,
+    approvedByUserId: row.approved_by_user_id ?? undefined,
+    approvedByName: row.approved_by_name ?? undefined,
+    approvedAt: row.approved_at ?? undefined,
+    rejectedByUserId: row.rejected_by_user_id ?? undefined,
+    rejectedByName: row.rejected_by_name ?? undefined,
+    rejectedAt: row.rejected_at ?? undefined,
     solanaCluster: row.solana_cluster ?? undefined,
     solanaSignature: row.solana_signature ?? undefined,
     explorerUrl: row.explorer_url ?? undefined,
@@ -159,6 +186,8 @@ function toRuleRow(rule: AllocationRule): AllocationRuleRow {
     daily_limit_cents: rule.dailyLimitCents,
     enabled: rule.enabled,
     buckets: rule.buckets,
+    created_by_user_id: rule.createdByUserId ?? null,
+    updated_by_user_id: rule.updatedByUserId ?? null,
   };
 }
 
@@ -169,6 +198,11 @@ function toRevenueEventRow(event: RevenueEvent): RevenueEventRow {
     dodo_payment_id: event.dodoPaymentId ?? null,
     dodo_subscription_id: event.dodoSubscriptionId ?? null,
     checkout_session_id: event.checkoutSessionId ?? null,
+    dodo_refund_id: event.dodoRefundId ?? null,
+    dodo_refund_status: event.dodoRefundStatus ?? null,
+    refund_reason: event.refundReason ?? null,
+    refund_requested_at: event.refundRequestedAt ?? null,
+    refunded_at: event.refundedAt ?? null,
     type: event.type,
     amount_cents: event.amountCents,
     currency: event.currency,
@@ -187,6 +221,12 @@ function toPayoutIntentRow(intent: PayoutIntent): PayoutIntentRow {
     currency: intent.currency,
     requires_approval: intent.requiresApproval,
     status: intent.status,
+    approved_by_user_id: intent.approvedByUserId ?? null,
+    approved_by_name: intent.approvedByName ?? null,
+    approved_at: intent.approvedAt ?? null,
+    rejected_by_user_id: intent.rejectedByUserId ?? null,
+    rejected_by_name: intent.rejectedByName ?? null,
+    rejected_at: intent.rejectedAt ?? null,
     solana_cluster: intent.solanaCluster ?? null,
     solana_signature: intent.solanaSignature ?? null,
     explorer_url: intent.explorerUrl ?? null,
@@ -312,6 +352,22 @@ export async function hasSeenWebhook(webhookId: string): Promise<boolean> {
   return Boolean(data);
 }
 
+export async function recordWebhookDelivery(webhookId: string): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    getMemoryState().seenWebhookIds.add(webhookId);
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("webhook_deliveries")
+    .upsert({ webhook_id: webhookId }, { onConflict: "webhook_id" });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function listAllocationRules(): Promise<AllocationRule[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().rules;
@@ -319,6 +375,36 @@ export async function listAllocationRules(): Promise<AllocationRule[]> {
 
   const { rules } = await loadSupabaseState();
   return rules.filter((rule) => rule.enabled);
+}
+
+export async function listAllAllocationRules(): Promise<AllocationRule[]> {
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().rules;
+  }
+
+  const { rules } = await loadSupabaseState();
+  return rules;
+}
+
+export async function getAllocationRuleById(
+  id: string
+): Promise<AllocationRule | undefined> {
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().rules.find((rule) => rule.id === id);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("allocation_rules")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ? mapRuleRow(data as AllocationRuleRow) : undefined;
 }
 
 export async function findAllocationRuleByMetadata(
@@ -371,6 +457,28 @@ async function syncAllocationRule(rule: AllocationRule) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export async function upsertAllocationRule(
+  rule: AllocationRule
+): Promise<AllocationRule> {
+  if (!isSupabaseConfigured()) {
+    await syncAllocationRule(rule);
+    return rule;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("allocation_rules")
+    .upsert(toRuleRow(rule), { onConflict: "id" })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return mapRuleRow(data as AllocationRuleRow);
 }
 
 export async function recordWebhookEvent(
@@ -462,6 +570,136 @@ export async function listRecentReceipts(): Promise<AllocRailReceipt[]> {
   return receipts;
 }
 
+export async function getReceiptById(
+  id: string
+): Promise<AllocRailReceipt | undefined> {
+  const receipts = await listRecentReceipts();
+  return receipts.find((receipt) => receipt.id === id);
+}
+
+export async function findRevenueEventByReference({
+  paymentId,
+  checkoutSessionId,
+  subscriptionId,
+}: {
+  paymentId?: string;
+  checkoutSessionId?: string;
+  subscriptionId?: string;
+}): Promise<RevenueEvent | undefined> {
+  if (!paymentId && !checkoutSessionId && !subscriptionId) {
+    return undefined;
+  }
+
+  if (!isSupabaseConfigured()) {
+    return loadMemoryState().events.find(
+      (event) =>
+        (paymentId && event.dodoPaymentId === paymentId) ||
+        (checkoutSessionId && event.checkoutSessionId === checkoutSessionId) ||
+        (subscriptionId && event.dodoSubscriptionId === subscriptionId)
+    );
+  }
+
+  const filters: string[] = [];
+  if (paymentId) {
+    filters.push(`dodo_payment_id.eq.${paymentId}`);
+  }
+  if (checkoutSessionId) {
+    filters.push(`checkout_session_id.eq.${checkoutSessionId}`);
+  }
+  if (subscriptionId) {
+    filters.push(`dodo_subscription_id.eq.${subscriptionId}`);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("revenue_events")
+    .select("*")
+    .or(filters.join(","))
+    .order("received_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ? mapRevenueEventRow(data as RevenueEventRow) : undefined;
+}
+
+export async function updateRevenueEventById(
+  id: string,
+  updater: (event: RevenueEvent) => RevenueEvent
+): Promise<RevenueEvent | undefined> {
+  if (!isSupabaseConfigured()) {
+    const state = getMemoryState();
+    let updatedEvent: RevenueEvent | undefined;
+
+    state.events = state.events.map((event) => {
+      if (event.id !== id) return event;
+      updatedEvent = updater(event);
+      return updatedEvent;
+    });
+
+    if (!updatedEvent) {
+      return undefined;
+    }
+
+    const finalEvent = updatedEvent;
+
+    state.receipts = state.receipts.map((receipt) =>
+      receipt.revenueEvent.id === id
+        ? {
+            ...receipt,
+            revenueEvent: finalEvent,
+          }
+        : receipt
+    );
+
+    return finalEvent;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("revenue_events")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return undefined;
+  }
+
+  const next = updater(mapRevenueEventRow(data as RevenueEventRow));
+  const { data: updatedData, error: updateError } = await supabase
+    .from("revenue_events")
+    .update(toRevenueEventRow(next))
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  return mapRevenueEventRow(updatedData as RevenueEventRow);
+}
+
+export async function updateRevenueEventByPaymentId(
+  paymentId: string,
+  updater: (event: RevenueEvent) => RevenueEvent
+): Promise<RevenueEvent | undefined> {
+  const revenueEvent = await findRevenueEventByReference({ paymentId });
+  if (!revenueEvent) {
+    return undefined;
+  }
+
+  return updateRevenueEventById(revenueEvent.id, updater);
+}
+
 export async function getPayoutIntentById(
   id: string
 ): Promise<PayoutIntent | undefined> {
@@ -537,4 +775,67 @@ export async function updatePayoutIntent(
   }
 
   return mapPayoutIntentRow(data as PayoutIntentRow);
+}
+
+export async function updatePayoutIntentsForRevenueEvent(
+  revenueEventId: string,
+  updater: (intent: PayoutIntent) => PayoutIntent
+): Promise<PayoutIntent[]> {
+  if (!isSupabaseConfigured()) {
+    const state = getMemoryState();
+    const updated: PayoutIntent[] = [];
+
+    state.payoutIntents = state.payoutIntents.map((intent) => {
+      if (intent.revenueEventId !== revenueEventId) {
+        return intent;
+      }
+      const next = updater(intent);
+      updated.push(next);
+      return next;
+    });
+
+    state.receipts = state.receipts.map((receipt) => {
+      if (receipt.revenueEvent.id !== revenueEventId) {
+        return receipt;
+      }
+
+      return {
+        ...receipt,
+        payoutIntents: receipt.payoutIntents.map((intent) =>
+          intent.revenueEventId === revenueEventId ? updater(intent) : intent
+        ),
+      };
+    });
+
+    return updated;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("payout_intents")
+    .select("*")
+    .eq("revenue_event_id", revenueEventId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const current = (data ?? []).map((row: unknown) =>
+    mapPayoutIntentRow(row as PayoutIntentRow)
+  );
+  const next = current.map(updater);
+
+  if (next.length === 0) {
+    return [];
+  }
+
+  const { error: upsertError } = await supabase
+    .from("payout_intents")
+    .upsert(next.map(toPayoutIntentRow), { onConflict: "id" });
+
+  if (upsertError) {
+    throw new Error(upsertError.message);
+  }
+
+  return next;
 }

@@ -10,10 +10,28 @@ const SUPPORTED_REVENUE_EVENTS: RevenueEventType[] = [
   "credit.deducted",
 ];
 
+const SUPPORTED_GUARDRAIL_EVENTS: RevenueEventType[] = [
+  "refund.succeeded",
+  "refund.failed",
+  "dispute.opened",
+  "dispute.expired",
+  "dispute.accepted",
+  "dispute.cancelled",
+  "dispute.challenged",
+  "dispute.won",
+  "dispute.lost",
+];
+
 export function isSupportedRevenueEvent(
   eventType: string
 ): eventType is RevenueEventType {
   return SUPPORTED_REVENUE_EVENTS.includes(eventType as RevenueEventType);
+}
+
+export function isSupportedGuardrailEvent(
+  eventType: string
+): eventType is RevenueEventType {
+  return SUPPORTED_GUARDRAIL_EVENTS.includes(eventType as RevenueEventType);
 }
 
 function readAmountUsdCents(payload: WebhookPayload) {
@@ -78,6 +96,56 @@ function readMetadata(payload: WebhookPayload) {
   }
 
   throw new Error(`Webhook payload for ${payload.type} is missing metadata`);
+}
+
+export function readOptionalMetadata(payload: WebhookPayload) {
+  if ("metadata" in payload.data && payload.data.metadata) {
+    return payload.data.metadata;
+  }
+
+  return undefined;
+}
+
+export function readPaymentId(payload: WebhookPayload) {
+  return "payment_id" in payload.data
+    ? toOptionalString(payload.data.payment_id)
+    : undefined;
+}
+
+export function readRefundId(payload: WebhookPayload) {
+  return "refund_id" in payload.data
+    ? toOptionalString(payload.data.refund_id)
+    : undefined;
+}
+
+export function readRefundStatus(payload: WebhookPayload) {
+  return "status" in payload.data
+    ? toOptionalString(String(payload.data.status))
+    : undefined;
+}
+
+export function readRefundReason(payload: WebhookPayload) {
+  return "reason" in payload.data
+    ? toOptionalString(payload.data.reason)
+    : undefined;
+}
+
+export function readRefundCreatedAt(payload: WebhookPayload) {
+  return "created_at" in payload.data
+    ? toOptionalString(payload.data.created_at)
+    : undefined;
+}
+
+export function readCheckoutSessionId(payload: WebhookPayload) {
+  return "checkout_session_id" in payload.data
+    ? toOptionalString(payload.data.checkout_session_id)
+    : undefined;
+}
+
+export function readSubscriptionId(payload: WebhookPayload) {
+  return "subscription_id" in payload.data
+    ? toOptionalString(payload.data.subscription_id)
+    : undefined;
 }
 
 export function isRecentWebhookTimestamp(

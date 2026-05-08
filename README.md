@@ -2,12 +2,12 @@
 
 **Dodo revenue -> programmable Solana treasury in one webhook.**
 
-AllocRail is a founder-facing treasury router for SaaS and AI businesses using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, and verified payment events. AllocRail turns those verified revenue events into payout intents, receipts, and dashboard-visible Solana treasury routes for contractors, tax reserves, founder distributions, and AI-agent budgets.
+AllocRail is a founder-facing treasury router for SaaS and AI businesses using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, refunds, and verified payment events. AllocRail turns those verified revenue events into payout intents, approvals, audit receipts, and dashboard-visible Solana treasury routes for contractors, tax reserves, founder distributions, and AI-agent budgets.
 
 ## Core Flow
 
 ```text
-Dodo checkout -> verified webhook -> allocation rule -> payout intents -> Solana devnet USDC transfers -> receipt
+Dodo checkout -> verified webhook -> allocation rule -> payout intents -> founder approval / hold logic -> Solana devnet USDC transfers -> audit receipt
 ```
 
 ## Current Product Surface
@@ -19,6 +19,7 @@ AllocRail now includes a founder dashboard with real pipeline visibility:
 - `/dashboard/payout-intents`
 - `/dashboard/receipts`
 - `/dashboard/rules`
+- `/dashboard/settings`
 
 The dashboard reads persisted routing state from Supabase when configured. If Supabase is not configured yet, the app falls back to process memory for local development only.
 
@@ -48,6 +49,10 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Solana devnet USDC multi-recipient payout path for Milestone 5.
 - Supabase-backed storage for webhook idempotency, revenue events, payout intents, receipts, and allocation rules.
 - Receipt page linking Dodo event IDs to settlement state and real Solana transaction signatures.
+- Founder profile settings backed by Supabase auth metadata and founder profile records.
+- Refund request flow from the Revenue Events inbox with Dodo refund receipt linkage.
+- Quarantine / hold logic for refund and dispute events before unsettled Solana payout execution.
+- Grouped payout routes by payment ID with route-level filtering for ops review.
 - Optional Anchor PDA treasury vault for policy-enforced payouts.
 
 ## Current API Surface
@@ -58,6 +63,9 @@ GET /api/allocrail/demo
 GET /api/allocrail/events
 GET /api/allocrail/payout-intents
 GET /api/allocrail/receipts
+GET /api/allocrail/payments/[paymentId]/receipt
+POST /api/allocrail/payments/[paymentId]/refund
+GET /api/allocrail/refunds/[refundId]/receipt
 GET /api/dodo/checkout
 POST /api/dodo/checkout
 GET /api/dodo/webhook
@@ -69,6 +77,10 @@ POST /api/dodo/webhook
 `/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
 
 `/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current routing pipeline state after verified webhooks are processed.
+
+`/api/allocrail/payments/[paymentId]/refund` creates a Dodo refund request and immediately holds open payout intents for that payment route.
+
+`/api/allocrail/payments/[paymentId]/receipt` and `/api/allocrail/refunds/[refundId]/receipt` proxy live Dodo payment/refund PDFs for founder download.
 
 `/api/allocrail/events?format=csv` exports the stored revenue events as CSV for dashboard download.
 
@@ -88,11 +100,12 @@ product_tag
 - Milestone 3: verified webhook routing pipeline
 - Milestone 4: founder dashboard
 - Milestone 5: Solana devnet USDC settlement proof with durable Supabase persistence and founder auth
+- Milestone 6: approval controls and safety guardrails
 
 Next:
 
-- Milestone 6: approval controls and safety guardrails
-- Milestone 7: deeper Dodo semantic integration
+- Milestone 7: deeper Dodo semantic integration for subscriptions and credit events
+- Production hardening: verified wallet-to-founder binding and treasury refill / FX source architecture
 
 ## Stack
 
@@ -133,10 +146,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ```
 
-Apply the Milestone 5 schema in your Supabase project:
+Apply the current Supabase migrations in order:
 
 ```text
-supabase/migrations/20260507_allocrail_milestone_5.sql
+supabase/migrations/20260507_allocrail_milestone_6.sql
+supabase/migrations/20260508_allocrail_receipt_sources.sql
+supabase/migrations/20260508_allocrail_founder_rls.sql
 ```
 
 Start the app:
@@ -153,7 +168,15 @@ http://localhost:3000
 
 Anchor setup requires the Anchor CLI. The scaffold includes an Anchor workspace under `anchor/`, but program build/deploy is optional for the first Dodo-to-devnet-USDC MVP.
 
-When Supabase is configured, events, payout intents, receipts, rules, and webhook idempotency survive server restarts. Without Supabase, the app falls back to in-memory storage and should be treated as local-only.
+When Supabase is configured, events, payout intents, receipts, founder profiles, rules, refund metadata, and webhook idempotency survive server restarts. Without Supabase, the app falls back to in-memory storage and should be treated as local-only.
+
+## Current Architecture Notes
+
+- Dodo is the verified revenue source of truth.
+- Solana devnet USDC is the programmable payout rail.
+- Founder approval and refund/dispute holds now sit between revenue ingestion and on-chain execution.
+- Current treasury model is pre-funded USDC payout from the founder treasury wallet.
+- Verified wallet-to-founder binding and automated fiat-to-USDC treasury refill are not implemented yet.
 
 ## Agentic Engineering Context
 

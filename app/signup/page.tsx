@@ -137,7 +137,7 @@ export default function SignupPage() {
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? "🙈" : "👁"}
+              {showPassword ? "Hide" : "Show"}
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function SignupPage() {
         <div className={styles.secondaryLinks}>
           <Link href="/login" className={styles.link}>
             Already have an account?{" "}
-            <span className={styles.linkAccent}>Login →</span>
+            <span className={styles.linkAccent}>{"Login ->"}</span>
           </Link>
         </div>
 
@@ -176,7 +176,7 @@ export default function SignupPage() {
             disabled
             title="Phantom connect stays inside the dashboard"
           >
-            <span className={styles.socialBtnIcon}>◎</span>
+            <span className={styles.socialBtnIcon}>Ph</span>
             Phantom
           </button>
         </div>

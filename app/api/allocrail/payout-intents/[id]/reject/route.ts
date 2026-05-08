@@ -19,24 +19,25 @@ export async function POST(
     return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
   }
 
-  if (intent.status !== "pending_approval") {
-    return NextResponse.json({
-      ok: true,
-      payoutIntent: intent,
-      noChange: true,
-    });
+  if (intent.status !== "pending_approval" && intent.status !== "approved") {
+    return NextResponse.json(
+      {
+        error: `Payout intent ${id} cannot be rejected from status ${intent.status}`,
+      },
+      { status: 409 }
+    );
   }
 
   const updated = await updatePayoutIntent(id, (current) => ({
     ...current,
-    status: "approved",
-    approvedByUserId: founder.userId,
-    approvedByName: founder.fullName,
-    approvedAt: new Date().toISOString(),
-    rejectedByUserId: undefined,
-    rejectedByName: undefined,
-    rejectedAt: undefined,
-    failureReason: undefined,
+    status: "rejected",
+    rejectedByUserId: founder.userId,
+    rejectedByName: founder.fullName,
+    rejectedAt: new Date().toISOString(),
+    approvedByUserId: undefined,
+    approvedByName: undefined,
+    approvedAt: undefined,
+    failureReason: "Rejected by founder approval control",
     failedAt: undefined,
   }));
 

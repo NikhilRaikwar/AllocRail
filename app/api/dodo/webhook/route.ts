@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { WebhookPayload } from "dodopayments/resources/webhook-events";
-import { getDodoClient } from "@/app/lib/allocrail/dodo";
+import { getDodoClient, retrieveDodoPayment } from "@/app/lib/allocrail/dodo";
 import {
   hasSeenWebhook,
+  recordWebhookDelivery,
   recordWebhookEvent,
+  updateRevenueEventByPaymentId,
 } from "@/app/lib/allocrail/event-store";
 import { getAppEnvironment } from "@/app/lib/allocrail/env";
 import {
@@ -11,8 +13,17 @@ import {
   createReceipt,
   resolveAllocationRule,
 } from "@/app/lib/allocrail/routing";
+import { applyGuardrailEvent } from "@/app/lib/allocrail/guardrails";
 import {
+  isSupportedGuardrailEvent,
   isRecentWebhookTimestamp,
+  readCheckoutSessionId,
+  readPaymentId,
+  readRefundCreatedAt,
+  readRefundId,
+  readRefundReason,
+  readRefundStatus,
+  readSubscriptionId,
   isSupportedRevenueEvent,
   toRevenueEvent,
 } from "@/app/lib/allocrail/webhook";
@@ -58,6 +69,15 @@ export function GET() {
       "subscription.renewed",
       "credit.added",
       "credit.deducted",
+      "refund.succeeded",
+      "refund.failed",
+      "dispute.opened",
+      "dispute.accepted",
+      "dispute.cancelled",
+      "dispute.challenged",
+      "dispute.expired",
+      "dispute.lost",
+      "dispute.won",
     ],
   });
 }
@@ -96,6 +116,46 @@ export async function POST(req: NextRequest) {
       key: getWebhookSecret(),
     })) as WebhookPayload;
 
+    if (isSupportedGuardrailEvent(payload.type)) {
+      if (payload.type.startsWith("refund.")) {
+        const paymentId = readPaymentId(payload);
+        if (paymentId) {
+          await updateRevenueEventByPaymentId(paymentId, (event) => ({
+            ...event,
+            dodoRefundId: readRefundId(payload) ?? event.dodoRefundId,
+            dodoRefundStatus: readRefundStatus(payload) ?? event.dodoRefundStatus,
+            refundReason: readRefundReason(payload) ?? event.refundReason,
+            refundRequestedAt:
+              readRefundCreatedAt(payload) ?? event.refundRequestedAt,
+            refundedAt:
+              payload.type === "refund.succeeded"
+                ? payload.timestamp
+                : event.refundedAt,
+          }));
+        }
+      }
+
+      const result = await applyGuardrailEvent({
+        eventType: payload.type,
+        paymentId: readPaymentId(payload),
+        checkoutSessionId: readCheckoutSessionId(payload),
+        subscriptionId: readSubscriptionId(payload),
+      });
+
+      await recordWebhookDelivery(webhookId);
+
+      return NextResponse.json({
+        ok: true,
+        webhookId,
+        eventType: payload.type,
+        guardrail: true,
+        revenueEventId: result.revenueEventId,
+        quarantinedCount: result.quarantinedCount,
+        matched: result.matched,
+        note: result.note,
+      });
+    }
+
     if (!isSupportedRevenueEvent(payload.type)) {
       return NextResponse.json({
         ok: true,
@@ -107,7 +167,17 @@ export async function POST(req: NextRequest) {
 
     const revenueEvent = toRevenueEvent(webhookId, payload);
     const allocationRule = await resolveAllocationRule(revenueEvent);
-    const payoutIntents = createPayoutIntents(revenueEvent, allocationRule);
+    const dodoPayment =
+      revenueEvent.type === "payment.succeeded" && revenueEvent.dodoPaymentId
+        ? await retrieveDodoPayment(revenueEvent.dodoPaymentId).catch(() => null)
+        : null;
+    const payoutIntents = createPayoutIntents(revenueEvent, allocationRule, {
+      amountCents:
+        dodoPayment?.settlement_amount && dodoPayment.settlement_amount > 0
+          ? dodoPayment.settlement_amount
+          : revenueEvent.amountCents,
+      currency: dodoPayment?.settlement_currency ?? revenueEvent.currency,
+    });
     const receipt = createReceipt(revenueEvent, allocationRule, payoutIntents);
     await recordWebhookEvent(webhookId, revenueEvent, payoutIntents, receipt);
 

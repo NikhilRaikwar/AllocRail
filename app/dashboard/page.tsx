@@ -42,10 +42,10 @@ export default async function DashboardOverviewPage() {
             Revenue Processed
           </div>
           <div className={styles.statValue} style={{ color: "var(--green)" }}>
-            {latestEvent
+            {snapshot.metrics.eventCount > 0
               ? formatMoney(
-                  snapshot.metrics.latestAmountCents,
-                  snapshot.metrics.latestCurrency
+                  snapshot.metrics.totalProcessedCents,
+                  snapshot.metrics.totalProcessedCurrency
                 )
               : "Rs 0.00"}
           </div>
@@ -61,10 +61,10 @@ export default async function DashboardOverviewPage() {
             Pending Intents
           </div>
           <div className={styles.statValue} style={{ color: "var(--amber)" }}>
-            {snapshot.metrics.payoutIntentCount}
+            {snapshot.metrics.activeIntentCount}
           </div>
           <div className={styles.statSub}>
-            {snapshot.metrics.pendingApprovalCount} require approval
+            {snapshot.metrics.latestReceiptPendingApprovalCount} require approval
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export default async function DashboardOverviewPage() {
                     <div className={styles.miniLabel} style={{ marginBottom: 12 }}>
                       Allocation Breakdown
                     </div>
-                    {snapshot.bucketSummaries.map((bucket) => {
+                    {snapshot.latestReceiptBucketSummaries.map((bucket) => {
                       const percent = Math.round(bucket.percentageBps / 100);
                       const colorMap: Record<string, string> = {
                         contractor_escrow: "var(--green)",
@@ -237,14 +237,14 @@ export default async function DashboardOverviewPage() {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <span className={`${styles.tag} ${styles.tagAmber}`}>
-                  {snapshot.metrics.pendingApprovalCount} need approval
+                  {snapshot.metrics.latestReceiptPendingApprovalCount} need approval
                 </span>
                 <LinkButton href="/dashboard/payout-intents">View all</LinkButton>
               </div>
             </div>
             <div className={styles.cardBodyFlush}>
               {snapshot.payoutIntents.length > 0 ? (
-                snapshot.payoutIntents.map((intent) => {
+                (latestReceipt?.payoutIntents ?? []).map((intent) => {
                   const ruleBucket = allocationRule?.buckets.find(
                     (bucket) => bucket.kind === intent.bucketKind
                   );
@@ -283,7 +283,9 @@ export default async function DashboardOverviewPage() {
                           className={`${styles.tag} ${
                             intent.status === "pending_approval"
                               ? styles.tagAmber
-                              : intent.status === "failed"
+                              : intent.status === "failed" ||
+                                  intent.status === "rejected" ||
+                                  intent.status === "quarantined"
                                 ? styles.tagRed
                                 : intent.status === "confirmed"
                                   ? styles.tagBlue
@@ -432,21 +434,33 @@ export default async function DashboardOverviewPage() {
                       value={
                         <span
                           className={`${styles.tag} ${
-                            latestReceipt.payoutIntents.every(
-                              (intent) => intent.status === "confirmed"
+                            latestReceipt.payoutIntents.some(
+                              (intent) => intent.status === "quarantined"
                             )
-                              ? styles.tagBlue
-                              : latestReceipt.payoutIntents.some(
+                              ? styles.tagRed
+                              : latestReceipt.payoutIntents.every(
                                     (intent) => intent.status === "confirmed"
                                   )
-                                ? styles.tagAmber
-                                : styles.tagMuted
+                                ? styles.tagBlue
+                                : latestReceipt.payoutIntents.some(
+                                      (intent) => intent.status === "confirmed"
+                                    )
+                                  ? styles.tagAmber
+                                  : styles.tagMuted
                           }`}
                         >
-                          {latestReceipt.payoutIntents.every(
-                            (intent) => intent.status === "confirmed"
+                          {latestReceipt.payoutIntents.some(
+                            (intent) => intent.status === "quarantined"
                           )
-                            ? "confirmed"
+                            ? "quarantined"
+                            : latestReceipt.payoutIntents.every(
+                              (intent) => intent.status === "confirmed"
+                            )
+                              ? "confirmed"
+                            : latestReceipt.payoutIntents.some(
+                                  (intent) => intent.status === "rejected"
+                                )
+                              ? "approval blocked"
                             : latestReceipt.payoutIntents.some(
                                   (intent) => intent.status === "confirmed"
                                 )

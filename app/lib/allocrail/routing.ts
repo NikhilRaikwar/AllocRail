@@ -9,19 +9,22 @@ const FX_RATES_TO_USD: Partial<Record<string, number>> = {
   INR: 83,
 };
 
-function normalizeRevenueToSettlementCents(event: RevenueEvent) {
-  const sourceCurrency = event.currency.toUpperCase();
+function normalizeRevenueToSettlementCents(
+  amountCents: number,
+  sourceCurrencyRaw: string
+) {
+  const sourceCurrency = sourceCurrencyRaw.toUpperCase();
   const rate = FX_RATES_TO_USD[sourceCurrency];
 
   if (!rate) {
-    return event.amountCents;
+    return amountCents;
   }
 
   if (rate === 1) {
-    return event.amountCents;
+    return amountCents;
   }
 
-  return Math.round(event.amountCents / rate);
+  return Math.round(amountCents / rate);
 }
 
 function validateAllocationRule(rule: AllocationRule) {
@@ -61,9 +64,18 @@ export async function resolveAllocationRule(event: RevenueEvent): Promise<Alloca
 
 export function createPayoutIntents(
   event: RevenueEvent,
-  rule: AllocationRule
+  rule: AllocationRule,
+  settlementBasis?: {
+    amountCents: number;
+    currency: string;
+  }
 ): PayoutIntent[] {
-  const settlementAmountCents = normalizeRevenueToSettlementCents(event);
+  const settlementAmountCents = settlementBasis
+    ? normalizeRevenueToSettlementCents(
+        settlementBasis.amountCents,
+        settlementBasis.currency
+      )
+    : normalizeRevenueToSettlementCents(event.amountCents, event.currency);
 
   return rule.buckets.map((bucket) => ({
     id: `po_${event.id}_${bucket.kind}`,

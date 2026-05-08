@@ -39,16 +39,21 @@ export default async function DashboardReceiptsPage() {
                 (intent) => intent.status === "confirmed"
               )
                 ? "confirmed"
+                : receipt.payoutIntents.some(
+                      (intent) => intent.status === "quarantined"
+                    )
+                  ? "quarantined"
                 : receipt.payoutIntents.some((intent) => intent.status === "failed")
                   ? "partial failure"
-                  : receipt.payoutIntents.some(
-                        (intent) => intent.status === "submitted"
-                    )
-                    ? "submitting"
-                    : "pending settlement";
-              const settlementLink = receipt.payoutIntents.find(
+                : receipt.payoutIntents.some((intent) => intent.status === "submitted")
+                  ? "submitting"
+                    : receipt.payoutIntents.some((intent) => intent.status === "rejected")
+                      ? "approval blocked"
+                      : "pending settlement";
+
+              const settlementCount = receipt.payoutIntents.filter(
                 (intent) => intent.explorerUrl
-              )?.explorerUrl;
+              ).length;
 
               return (
                 <div className={styles.receiptRow} key={receipt.id}>
@@ -66,7 +71,7 @@ export default async function DashboardReceiptsPage() {
                       flexShrink: 0,
                     }}
                   >
-                    ◈
+                    R
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
@@ -133,24 +138,17 @@ export default async function DashboardReceiptsPage() {
                     >
                       {formatTimestamp(receipt.revenueEvent.receivedAt)}
                     </div>
-                    {settlementLink ? (
-                      <a
-                        href={settlementLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.explorerLink}
-                        style={{ fontSize: 10 }}
-                      >
-                        latest settlement
-                      </a>
-                    ) : (
-                      <span
-                        className={styles.mono}
-                        style={{ fontSize: 10, color: "var(--ink-faint)" }}
-                      >
-                        waiting for execution
-                      </span>
-                    )}
+                    <a
+                      href={`/dashboard/receipts/${receipt.id}`}
+                      className={styles.explorerLink}
+                      style={{ fontSize: 10 }}
+                    >
+                      {settlementCount > 0
+                        ? `view ${settlementCount} settlement${
+                            settlementCount === 1 ? "" : "s"
+                          }`
+                        : "open receipt"}
+                    </a>
                   </div>
                 </div>
               );

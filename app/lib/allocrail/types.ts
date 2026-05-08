@@ -6,6 +6,15 @@ export type AllocationBucketKind =
 
 export type RevenueEventType =
   | "payment.succeeded"
+  | "refund.succeeded"
+  | "refund.failed"
+  | "dispute.opened"
+  | "dispute.expired"
+  | "dispute.accepted"
+  | "dispute.cancelled"
+  | "dispute.challenged"
+  | "dispute.won"
+  | "dispute.lost"
   | "subscription.active"
   | "subscription.renewed"
   | "credit.added"
@@ -15,6 +24,8 @@ export type PayoutIntentStatus =
   | "draft"
   | "pending_approval"
   | "approved"
+  | "rejected"
+  | "quarantined"
   | "submitted"
   | "confirmed"
   | "failed";
@@ -37,6 +48,8 @@ export type AllocationRule = {
   buckets: AllocationBucket[];
   dailyLimitCents: number;
   enabled: boolean;
+  createdByUserId?: string;
+  updatedByUserId?: string;
 };
 
 export type DodoRoutingMetadata = {
@@ -52,6 +65,11 @@ export type RevenueEvent = {
   dodoPaymentId?: string;
   dodoSubscriptionId?: string;
   checkoutSessionId?: string;
+  dodoRefundId?: string;
+  dodoRefundStatus?: string;
+  refundReason?: string;
+  refundRequestedAt?: string;
+  refundedAt?: string;
   type: RevenueEventType;
   amountCents: number;
   currency: string;
@@ -68,6 +86,12 @@ export type PayoutIntent = {
   currency: "USDC";
   requiresApproval: boolean;
   status: PayoutIntentStatus;
+  approvedByUserId?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectedByUserId?: string;
+  rejectedByName?: string;
+  rejectedAt?: string;
   solanaCluster?: string;
   solanaSignature?: string;
   explorerUrl?: string;
@@ -82,4 +106,10 @@ export type AllocRailReceipt = {
   revenueEvent: RevenueEvent;
   allocationRule: AllocationRule;
   payoutIntents: PayoutIntent[];
+};
+
+export type FounderProfile = {
+  userId: string;
+  email: string;
+  fullName: string;
 };

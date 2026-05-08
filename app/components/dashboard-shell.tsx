@@ -39,6 +39,7 @@ const navItems = [
   { href: "/dashboard/payout-intents", label: "Payout Intents", icon: ">" },
   { href: "/dashboard/receipts", label: "Receipts", icon: "R" },
   { href: "/dashboard/rules", label: "Allocation Rules", icon: "=" },
+  { href: "/dashboard/settings", label: "Profile Settings", icon: "P" },
 ];
 
 type DashboardShellProps = {

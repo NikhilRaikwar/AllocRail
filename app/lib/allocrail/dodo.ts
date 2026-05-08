@@ -1,5 +1,7 @@
 import DodoPayments from "dodopayments";
 import type { CheckoutSessionCreateParams } from "dodopayments/resources/checkout-sessions";
+import type { Payment } from "dodopayments/resources/payments";
+import type { Refund, RefundCreateParams } from "dodopayments/resources/refunds";
 import { demoAllocationRule } from "./demo-data";
 import { getAppEnvironment } from "./env";
 import type { DodoRoutingMetadata } from "./types";
@@ -90,4 +92,32 @@ export async function createDodoCheckoutSession(
     metadata,
     productId,
   };
+}
+
+export async function retrieveDodoPayment(paymentId: string): Promise<Payment> {
+  return getDodoClient().payments.retrieve(paymentId);
+}
+
+export async function retrieveDodoPaymentReceipt(
+  paymentId: string
+): Promise<Response> {
+  return getDodoClient().invoices.payments.retrieve(paymentId);
+}
+
+export async function retrieveDodoRefundReceipt(
+  refundId: string
+): Promise<Response> {
+  return getDodoClient().invoices.payments.retrieveRefund(refundId);
+}
+
+export async function requestDodoRefund(input: {
+  paymentId: string;
+  reason?: string;
+  metadata?: RefundCreateParams["metadata"];
+}): Promise<Refund> {
+  return getDodoClient().refunds.create({
+    payment_id: input.paymentId,
+    reason: input.reason,
+    metadata: input.metadata,
+  });
 }
