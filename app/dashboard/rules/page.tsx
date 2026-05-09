@@ -59,7 +59,7 @@ export default async function DashboardRulesPage() {
           >
             {primaryRule
               ? formatMoney(primaryRule.dailyLimitCents, "USD")
-              : "Rs 0.00"}
+              : formatMoney(0, "USD")}
           </div>
         </div>
       </div>

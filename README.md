@@ -55,6 +55,7 @@ AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the pr
 - Refund request flow from the Revenue Events inbox with Dodo refund receipt linkage.
 - Quarantine / hold logic for refund and dispute events before unsettled Solana payout execution.
 - Grouped payout routes by payment ID with route-level filtering for ops review.
+- AI treasury copilot for rule drafting, queue summaries, and budget-risk summaries.
 - Optional Anchor PDA treasury vault for policy-enforced payouts.
 
 ## Current API Surface
@@ -68,6 +69,9 @@ GET /api/allocrail/receipts
 GET /api/allocrail/payments/[paymentId]/receipt
 POST /api/allocrail/payments/[paymentId]/refund
 GET /api/allocrail/refunds/[refundId]/receipt
+POST /api/allocrail/copilot/rule-draft
+POST /api/allocrail/copilot/reconcile-summary
+POST /api/allocrail/copilot/budget-summary
 GET /api/dodo/checkout
 POST /api/dodo/checkout
 GET /api/dodo/webhook
@@ -85,6 +89,8 @@ POST /api/dodo/webhook
 `/api/allocrail/payments/[paymentId]/receipt` and `/api/allocrail/refunds/[refundId]/receipt` proxy live Dodo payment/refund PDFs for founder download.
 
 `/api/allocrail/events?format=csv` exports the stored revenue events as CSV for dashboard download.
+
+`/api/allocrail/copilot/rule-draft`, `/api/allocrail/copilot/reconcile-summary`, and `/api/allocrail/copilot/budget-summary` power the Milestone 8 copilot features and are constrained to `gpt-4o-mini` structured outputs.
 
 `/api/dodo/checkout` creates a Dodo checkout session in test mode with AllocRail metadata:
 
@@ -104,11 +110,11 @@ product_tag
 - Milestone 5: Solana devnet USDC settlement proof with durable Supabase persistence and founder auth
 - Milestone 6: approval controls and safety guardrails
 - Milestone 7: deeper Dodo semantic integration for subscriptions and credit events
+- Milestone 8: AI treasury copilot with rule drafting, queue summaries, and budget guard
 - Production hardening: verified wallet-to-founder binding and treasury refill / FX source architecture
 
 Next:
 
-- Milestone 8: AI treasury copilot
 - Milestone 9: submission polish, trust layer, and demo hardening
 
 ## Stack
@@ -148,6 +154,8 @@ Required Supabase variables:
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+OPENAI_API_KEY
+OPENAI_BASE_URL
 ```
 
 Apply the current Supabase migrations in order:
@@ -182,8 +190,9 @@ When Supabase is configured, events, payout intents, receipts, founder profiles,
 - Solana devnet USDC is the programmable payout rail.
 - Founder approval and refund/dispute holds now sit between revenue ingestion and on-chain execution.
 - Founder approval, rejection, and execution now require a bound treasury operator wallet.
-- Current settlement executor is still a pre-funded server treasury signer in demo mode.
+- Current settlement execution is wallet-signed by the bound founder wallet, not an env-funded treasury signer.
 - Treasury refill mode and FX source are now explicit founder-managed settings rather than hidden routing assumptions.
+- Milestone 8 copilot calls are constrained to `gpt-4o-mini` and use structured JSON outputs only.
 
 ## Agentic Engineering Context
 

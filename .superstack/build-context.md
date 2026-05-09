@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Build Milestone 8 AI treasury copilot.
-2. Tighten founder-facing demo flow and submission narrative.
-3. Decide whether to move from server treasury signer to founder-signed or policy-vault execution.
-4. Package Milestone 9 submission-quality polish.
+1. Tighten founder-facing demo flow and submission narrative.
+2. Package Milestone 9 submission-quality polish.
+3. Decide whether to move from founder-signed direct execution to a policy-vault / multisig treasury.
+4. Prepare judge-facing demo, README, and submission copy.
 
 ## Build Status
 
@@ -161,3 +161,17 @@ Current verification:
 - `npm run build`: passing.
 - Live Supabase schema updated for wallet binding and treasury config.
 - Real Dodo subscription lifecycle and `credit.added` events now flow into founder-visible signal handling without creating duplicate or zero-value payout routes.
+
+Milestone 8: AI treasury copilot.
+  - Added OpenAI-backed treasury copilot routes using `gpt-4o-mini` only.
+  - Added natural-language rule drafting on `/dashboard/rules`.
+  - Added queue summary and budget-risk summary actions on `/dashboard`.
+  - Added structured JSON outputs and constrained prompts to avoid generic chat behavior.
+  - Added local empty-state short-circuits so no token spend happens when the queue or budget view has no meaningful data.
+  - Added localhost dev auth bypass for copilot routes only, mirroring local guardrail testing convenience without weakening production auth.
+
+Current verification:
+
+- `npm run build`: passing.
+- Live OpenAI key validated with a real `gpt-4o-mini` request.
+- Founder-facing Milestone 8 surfaces verified on `/dashboard` and `/dashboard/rules`.

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import styles from "@/app/dashboard/dashboard.module.css";
+import { RuleCopilotDraft } from "@/app/components/rule-copilot-draft";
 import type {
   AllocationBucket,
   AllocationBucketKind,
@@ -131,10 +132,26 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
     () => draft?.buckets.reduce((sum, bucket) => sum + Number(bucket.percentageBps || 0), 0) ?? 0,
     [draft]
   );
+  const defaultWallets = useMemo(() => {
+    const sourceRule = initialRules[0];
+    return (sourceRule?.buckets ?? []).reduce(
+      (acc, bucket) => {
+        acc[bucket.kind] = bucket.recipientWallet;
+        return acc;
+      },
+      {} as Partial<Record<AllocationBucketKind, string>>
+    );
+  }, [initialRules]);
 
   const startCreate = () => {
     setEditingId("new");
     setDraft(emptyDraft());
+    setError(null);
+  };
+
+  const applyCopilotDraft = (copilotDraft: RuleDraft) => {
+    setEditingId("new");
+    setDraft(copilotDraft);
     setError(null);
   };
 
@@ -232,6 +249,10 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
 
   return (
     <>
+      <RuleCopilotDraft
+        defaultWallets={defaultWallets}
+        onApply={applyCopilotDraft}
+      />
       <div className={styles.sectionToolbar}>
         <div className={styles.helperText}>
           Founder-managed treasury routing rules and payout bucket controls.
@@ -344,7 +365,7 @@ export function RulesManager({ initialRules }: { initialRules: AllocationRule[] 
                   </div>
                   {(rule.createdByUserId || rule.updatedByUserId) && (
                     <div className={styles.ruleAudit}>
-                      owner {rule.createdByUserId ?? "unknown"} · last editor{" "}
+                      owner {rule.createdByUserId ?? "unknown"} | last editor{" "}
                       {rule.updatedByUserId ?? "unknown"}
                     </div>
                   )}

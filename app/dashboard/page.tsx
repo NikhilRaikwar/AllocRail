@@ -1,4 +1,5 @@
 import { DashboardShell } from "@/app/components/dashboard-shell";
+import { TreasuryCopilotCard } from "@/app/components/treasury-copilot-card";
 import {
   formatMoney,
   formatTimestamp,
@@ -56,13 +57,13 @@ export default async function DashboardOverviewPage() {
                   >
                     {formatMoney(entry.totalCents, entry.currency)}
                   </div>
-                  <div className={styles.statSub}>{entry.currency} · {entry.eventCount} events</div>
+                  <div className={styles.statSub}>{entry.currency} | {entry.eventCount} events</div>
                 </div>
               ))}
             </div>
           ) : (
             <div className={styles.statValue} style={{ color: "var(--green)" }}>
-              Rs 0.00
+              {formatMoney(0, "INR")}
             </div>
           )}
           <div className={styles.statSub}>{snapshot.metrics.revenueRouteCount} one-time routes</div>
@@ -106,6 +107,8 @@ export default async function DashboardOverviewPage() {
 
       <div className={styles.contentGrid}>
         <div className={styles.stack}>
+          <TreasuryCopilotCard />
+
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
@@ -148,10 +151,7 @@ export default async function DashboardOverviewPage() {
                 <>
                   <div className={styles.overviewGrid}>
                     <InfoBlock label="Payment ID" value={latestEvent.dodoPaymentId ?? "-"} />
-                    <InfoBlock
-                      label="Subscription"
-                      value={latestEvent.dodoSubscriptionId ?? "-"}
-                    />
+                    <InfoBlock label="Subscription" value={latestEvent.dodoSubscriptionId ?? "-"} />
                     <div>
                       <div className={styles.miniLabel}>Amount</div>
                       <div
@@ -165,10 +165,7 @@ export default async function DashboardOverviewPage() {
                       label="Route Kind"
                       value={getEventRouteKindLabel(getEventRouteKind(latestEvent))}
                     />
-                    <InfoBlock
-                      label="Received At"
-                      value={formatTimestamp(latestEvent.receivedAt)}
-                    />
+                    <InfoBlock label="Received At" value={formatTimestamp(latestEvent.receivedAt)} />
                     <InfoBlock
                       label="Context"
                       value={
@@ -219,7 +216,7 @@ export default async function DashboardOverviewPage() {
                                 <div className={styles.allocName}>{bucket.label}</div>
                               </div>
                               <span className={styles.allocPct} style={{ color: colorMap[bucket.kind] }}>
-                                {percent}% · {formatMoney(bucket.amountCents, "USDC")}
+                                {percent}% | {formatMoney(bucket.amountCents, "USDC")}
                               </span>
                             </div>
                             <div className={styles.barTrack}>
@@ -284,9 +281,7 @@ export default async function DashboardOverviewPage() {
                         <div className={styles.intentLabel}>
                           {ruleBucket?.label ?? intent.bucketKind.replaceAll("_", " ")}
                         </div>
-                        <div className={styles.intentWallet}>
-                          {shortId(intent.recipientWallet, 10, 4)}
-                        </div>
+                        <div className={styles.intentWallet}>{shortId(intent.recipientWallet, 10, 4)}</div>
                       </div>
                       <div className={styles.intentAmount}>
                         <div className={styles.intentUsdc}>
@@ -320,7 +315,7 @@ export default async function DashboardOverviewPage() {
             </div>
             <div className={styles.footer}>
               <span className={styles.footerLabel}>settlement currency</span>
-              <span className={styles.footerValue}>USDC · Solana devnet</span>
+              <span className={styles.footerValue}>USDC | Solana devnet</span>
             </div>
           </div>
         </div>
@@ -426,13 +421,20 @@ export default async function DashboardOverviewPage() {
             <div className={styles.cardBody}>
               {latestReceipt ? (
                 <>
-                  <div className={styles.mono} style={{ fontSize: 11, marginBottom: 10, color: "var(--ink-muted)" }}>
+                  <div
+                    className={styles.mono}
+                    style={{ fontSize: 11, marginBottom: 10, color: "var(--ink-muted)" }}
+                  >
                     {latestReceipt.id}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                     <DataPair
                       label="Dodo event"
-                      value={<span className={`${styles.tag} ${styles.tagGreen}`}>{latestReceipt.revenueEvent.type}</span>}
+                      value={
+                        <span className={`${styles.tag} ${styles.tagGreen}`}>
+                          {latestReceipt.revenueEvent.type}
+                        </span>
+                      }
                     />
                     <DataPair label="Intents" value={`${latestReceipt.payoutIntents.length} generated`} />
                     <DataPair
