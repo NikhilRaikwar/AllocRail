@@ -81,7 +81,7 @@ export function AuthShell({
                 <span className={styles.badgePip}></span>
                 Solana devnet live
               </span>
-              <span className={styles.bottomBadge}>Dodo test_mode</span>
+              <span className={styles.bottomBadge}>Dodo Test Mode</span>
               <span
                 className={`${styles.bottomBadge} ${styles.bottomBadgePush}`}
               >

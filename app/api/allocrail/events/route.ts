@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  getEventRouteKind,
+  getEventRouteKindLabel,
+} from "@/app/lib/allocrail/dashboard-data";
+import {
   listRecentPayoutIntents,
   listRecentReceipts,
   listRecentRevenueEvents,
@@ -15,38 +19,44 @@ function escapeCsv(value: string | number | null | undefined) {
 async function buildEventsCsv() {
   const events = await listRecentRevenueEvents();
   const header = [
-    "event_id",
-    "event_type",
-    "payment_id",
-    "checkout_session_id",
-    "amount_cents",
-    "currency",
-    "rule_id",
-    "workspace_id",
-    "merchant_id",
-    "product_tag",
-    "received_at",
+    "Event ID",
+    "Event Type",
+    "Route Kind",
+    "Amount",
+    "Currency",
+    "Payment ID",
+    "Subscription ID",
+    "Checkout Session ID",
+    "Customer ID",
+    "Rule ID",
+    "Workspace ID",
+    "Merchant ID",
+    "Product Tag",
+    "Received At",
   ];
 
   const rows = events.map((event: RevenueEvent) =>
     [
       event.id,
       event.type,
-      event.dodoPaymentId ?? "",
-      event.checkoutSessionId ?? "",
-      event.amountCents,
+      getEventRouteKindLabel(getEventRouteKind(event)),
+      (event.amountCents / 100).toFixed(2),
       event.currency,
-      event.metadata.rule_id,
-      event.metadata.workspace_id,
-      event.metadata.merchant_id,
-      event.metadata.product_tag,
+      event.dodoPaymentId ?? "",
+      event.dodoSubscriptionId ?? "",
+      event.checkoutSessionId ?? "",
+      event.dodoCustomerId ?? "",
+      event.metadata.rule_id ?? "",
+      event.metadata.workspace_id ?? "",
+      event.metadata.merchant_id ?? "",
+      event.metadata.product_tag ?? "",
       event.receivedAt,
     ]
       .map(escapeCsv)
       .join(",")
   );
 
-  return [header.join(","), ...rows].join("\n");
+  return [`\uFEFF${header.join(",")}`, ...rows].join("\n");
 }
 
 export async function GET(req: NextRequest) {
@@ -64,7 +74,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="allocrail-events-${timestamp}.csv"`,
+        "Content-Disposition": `attachment; filename="allocrail-revenue-events-${timestamp}.csv"`,
         "Cache-Control": "no-store",
       },
     });

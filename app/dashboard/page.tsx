@@ -105,10 +105,51 @@ export default async function DashboardOverviewPage() {
         </div>
       </div>
 
+      <div className={styles.demoStoryCard}>
+        <div className={styles.demoStoryHeader}>
+          <div>
+            <div className={styles.cardEyebrow}>judge demo path</div>
+            <div className={styles.demoStoryTitle}>One founder workflow from revenue to receipt.</div>
+          </div>
+          <div className={styles.demoStoryActions}>
+            <a href="/dashboard/payout-intents" className={styles.primaryButton}>
+              Review queue
+            </a>
+            <a href="/dashboard/receipts" className={styles.secondaryButton}>
+              Open receipts
+            </a>
+          </div>
+        </div>
+        <div className={styles.demoStorySteps}>
+          <DemoStep
+            toneClass={styles.stepGreen}
+            step="1"
+            title="Dodo confirms revenue"
+            body="A verified payment event arrives with the routing metadata that matches the founder rule."
+          />
+          <DemoStep
+            toneClass={styles.stepPurple}
+            step="2"
+            title="AllocRail creates one route"
+            body="The billing cycle becomes one actionable payout route instead of a noisy subscription event cluster."
+          />
+          <DemoStep
+            toneClass={styles.stepAmber}
+            step="3"
+            title="Founder approves sensitive buckets"
+            body="Contractor and agent-budget intents wait for approval, while refund and dispute signals can still hold the route."
+          />
+          <DemoStep
+            toneClass={styles.stepBlue}
+            step="4"
+            title="Solana settles and receipt proves it"
+            body="Execution is wallet-signed from the bound treasury operator wallet and recorded in a receipt-linked audit trail."
+          />
+        </div>
+      </div>
+
       <div className={styles.contentGrid}>
         <div className={styles.stack}>
-          <TreasuryCopilotCard />
-
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
@@ -371,6 +412,8 @@ export default async function DashboardOverviewPage() {
             </div>
           </div>
 
+          <TreasuryCopilotCard />
+
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
@@ -527,6 +570,26 @@ function DataPair({
       <span className={styles.mono} style={emphasize ? { color: "var(--green)" } : undefined}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function DemoStep({
+  step,
+  title,
+  body,
+  toneClass,
+}: {
+  step: string;
+  title: string;
+  body: string;
+  toneClass: string;
+}) {
+  return (
+    <div className={styles.demoStoryStep}>
+      <div className={`${styles.demoStepBadge} ${toneClass}`}>{step}</div>
+      <div className={styles.demoStepTitle}>{title}</div>
+      <div className={styles.demoStepBody}>{body}</div>
     </div>
   );
 }

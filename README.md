@@ -1,8 +1,25 @@
 # AllocRail
 
-**Dodo revenue -> programmable Solana treasury in one webhook.**
+**The programmable treasury layer after Dodo revenue lands.**
 
 AllocRail is a founder-facing treasury router for SaaS and AI businesses using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, refunds, and verified payment events. AllocRail turns those verified revenue events into payout intents, approvals, audit receipts, and dashboard-visible Solana treasury routes for contractors, tax reserves, founder distributions, and AI-agent budgets.
+
+## What Judges Should See
+
+```text
+Dodo revenue comes in.
+AllocRail splits it.
+Founder approves it.
+Solana settles it.
+Receipt proves it.
+```
+
+Current demo artifacts:
+
+- landscape video: `allocrail-demo-video/out/allocrail-demo.mp4`
+- vertical social cut: `allocrail-demo-video/out/allocrail-social.mp4`
+- demo script: `docs/MILESTONE_9_DEMO_SCRIPT.md`
+- submission copy: `docs/SUBMISSION_COPY.md`
 
 ## Core Flow
 
@@ -116,6 +133,32 @@ product_tag
 Next:
 
 - Milestone 9: submission polish, trust layer, and demo hardening
+
+## Milestone 9 Direction
+
+Milestone 9 is about making the project judge-ready:
+
+- simplify the founder story to one actionable payout route per billing cycle
+- foreground Dodo as the verified revenue source
+- foreground Solana as the programmable settlement rail
+- de-emphasize generic checkout or subscription-infra positioning
+- show proof through a crisp dashboard-to-settlement-to-receipt demo
+
+Colosseum Copilot research confirms the crowded part of the market is generic stablecoin checkout and payment-infrastructure tooling. AllocRail's strongest wedge is the post-revenue treasury layer for SaaS and AI founders.
+
+## Demo Video Artifact
+
+The current Milestone 9 video cut lives at:
+
+```text
+allocrail-demo-video/out/allocrail-demo.mp4
+```
+
+It is a landscape-first product demo built in Remotion and centered on:
+
+```text
+Dodo payment -> payout route -> founder approval -> Solana settlement -> receipt proof
+```
 
 ## Stack
 

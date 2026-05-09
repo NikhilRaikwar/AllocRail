@@ -13,7 +13,7 @@ export default async function DashboardReceiptsPage() {
     <DashboardShell title="Receipts">
       <div className={styles.pageHeader}>
         <div>
-          <div className={styles.eyebrow}>// receipts</div>
+          <div className={styles.eyebrow}>Receipts</div>
           <h1 className={styles.pageTitle}>
             Audit <em>Snapshots.</em>
           </h1>
@@ -43,13 +43,15 @@ export default async function DashboardReceiptsPage() {
                       (intent) => intent.status === "quarantined"
                     )
                   ? "quarantined"
-                : receipt.payoutIntents.some((intent) => intent.status === "failed")
-                  ? "partial failure"
-                : receipt.payoutIntents.some((intent) => intent.status === "submitted")
-                  ? "submitting"
-                    : receipt.payoutIntents.some((intent) => intent.status === "rejected")
-                      ? "approval blocked"
-                      : "pending settlement";
+                  : receipt.payoutIntents.some((intent) => intent.status === "failed")
+                    ? "partial failure"
+                    : receipt.payoutIntents.some((intent) => intent.status === "submitted")
+                      ? "submitting"
+                      : receipt.payoutIntents.some(
+                            (intent) => intent.status === "rejected"
+                          )
+                        ? "approval blocked"
+                        : "pending settlement";
 
               const settlementCount = receipt.payoutIntents.filter(
                 (intent) => intent.explorerUrl
@@ -57,21 +59,8 @@ export default async function DashboardReceiptsPage() {
 
               return (
                 <div className={styles.receiptRow} key={receipt.id}>
-                  <div
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      border: "1px solid var(--border-strong)",
-                      background: "var(--cream-dark)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 14,
-                      flexShrink: 0,
-                    }}
-                  >
-                    R
+                  <div className={styles.receiptBadge} aria-hidden="true">
+                    {"\u25C8"}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
@@ -84,7 +73,7 @@ export default async function DashboardReceiptsPage() {
                     >
                       {receipt.id}
                     </div>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
                       {receipt.revenueEvent.type} {"->"} {receipt.allocationRule.name}
                     </div>
                     <div

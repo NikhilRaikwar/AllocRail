@@ -395,7 +395,7 @@ export function buildAllocRailReceiptHtml(receipt: AllocRailReceipt) {
       </div>
       <div class="footer-right">
         <div class="footer-chain"><span class="footer-chain-dot"></span>Solana Devnet &middot; USDC</div>
-        <div class="footer-dodo">Dodo test_mode &middot; Superteam India x Solana Frontier</div>
+        <div class="footer-dodo">Dodo Test Mode &middot; Superteam India x Solana Frontier</div>
       </div>
     </div>
   </div>

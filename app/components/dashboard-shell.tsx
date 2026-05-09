@@ -34,12 +34,12 @@ const courierPrime = Courier_Prime({
 });
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", icon: "O" },
-  { href: "/dashboard/events", label: "Revenue Events", icon: "$" },
-  { href: "/dashboard/payout-intents", label: "Payout Intents", icon: ">" },
-  { href: "/dashboard/receipts", label: "Receipts", icon: "R" },
-  { href: "/dashboard/rules", label: "Allocation Rules", icon: "=" },
-  { href: "/dashboard/settings", label: "Profile Settings", icon: "P" },
+  { href: "/dashboard", label: "Overview", icon: "\u2B21" },
+  { href: "/dashboard/events", label: "Revenue Events", icon: "\u26A1" },
+  { href: "/dashboard/payout-intents", label: "Payout Intents", icon: "\u2192" },
+  { href: "/dashboard/receipts", label: "Receipts", icon: "\u25C8" },
+  { href: "/dashboard/rules", label: "Allocation Rules", icon: "\u2261" },
+  { href: "/dashboard/settings", label: "Profile Settings", icon: "\u25C9" },
 ];
 
 type DashboardShellProps = {
@@ -92,7 +92,7 @@ export function DashboardShell({ title, children }: DashboardShellProps) {
       <div className={styles.shell}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarActionCard}>
-            <div className={styles.sidebarActionTitle}>// demo checkout</div>
+            <div className={styles.sidebarActionTitle}>Demo Checkout</div>
             <CheckoutButton
               metadata={metadata}
               email="founder-demo@allocrail.dev"
@@ -106,7 +106,7 @@ export function DashboardShell({ title, children }: DashboardShellProps) {
             />
           </div>
 
-          <span className={styles.sidebarLabel}>// treasury</span>
+          <span className={styles.sidebarLabel}>Treasury Workspace</span>
           {navItems.map((item) => {
             const active =
               pathname === item.href ||
@@ -126,29 +126,14 @@ export function DashboardShell({ title, children }: DashboardShellProps) {
             );
           })}
 
-          <span className={styles.sidebarLabel}>// solana</span>
-          <div className={styles.sidebarLink}>
-            <span className={styles.sidebarIcon}>S</span>
-            Devnet USDC
-          </div>
-          <div className={styles.sidebarLink}>
-            <span className={styles.sidebarIcon}>V</span>
-            Vault Status
-          </div>
-
           <div className={styles.sidebarBottom}>
             <div className={styles.webhookStatus}>
               <span className={styles.pip} />
-              <span className={styles.webhookText}>Webhook active</span>
+              <span className={styles.webhookText}>Webhook Active</span>
             </div>
-            <div className={styles.sidebarLink}>
-              <span className={styles.sidebarIcon}>T</span>
-              <span
-                className={styles.webhookText}
-                style={{ color: "var(--ink-muted)" }}
-              >
-                Dodo test_mode
-              </span>
+            <div className={styles.sidebarStatusCard}>
+              <div className={styles.sidebarStatusLabel}>Billing Environment</div>
+              <div className={styles.sidebarStatusValue}>Dodo Test Mode</div>
             </div>
           </div>
         </aside>

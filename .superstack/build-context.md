@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Tighten founder-facing demo flow and submission narrative.
-2. Package Milestone 9 submission-quality polish.
+1. Finalize Milestone 9 submission-quality polish around the founder treasury story.
+2. Refine the rendered Remotion demo cut and produce social variants if needed.
 3. Decide whether to move from founder-signed direct execution to a policy-vault / multisig treasury.
-4. Prepare judge-facing demo, README, and submission copy.
+4. Prepare final judge-facing submission copy and video script.
 
 ## Build Status
 
@@ -175,3 +175,14 @@ Current verification:
 - `npm run build`: passing.
 - Live OpenAI key validated with a real `gpt-4o-mini` request.
 - Founder-facing Milestone 8 surfaces verified on `/dashboard` and `/dashboard/rules`.
+
+Milestone 9: submission polish and demo hardening.
+  - Added a dedicated Remotion video workspace at `allocrail-demo-video/`.
+  - Built and rendered the first landscape demo cut at `allocrail-demo-video/out/allocrail-demo.mp4`.
+  - Tightened the submission narrative around "post-revenue treasury routing" instead of generic stablecoin checkout.
+  - Used Colosseum Copilot to confirm competing projects cluster around stablecoin payment rails and infrastructure, which reinforces AllocRail's treasury-ops wedge.
+
+Current verification:
+
+- Rendered `allocrail-demo-video/out/allocrail-demo.mp4`.
+- Colosseum Copilot query returned adjacent projects such as `pistis-pay` and `misk.fi-stablecoin-payments-for-your-business`, confirming the need to lean away from generic checkout positioning.

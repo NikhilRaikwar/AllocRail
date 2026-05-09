@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { CheckoutButton } from "./components/checkout-button";
 import { ClusterSelect } from "./components/cluster-select";
 import { ThemeToggle } from "./components/theme-toggle";
-import { WalletButton } from "./components/wallet-button";
 import {
   DEMO_MERCHANT_ID,
   DEMO_RULE_ID,
@@ -1447,7 +1446,6 @@ export default function Home() {
           </a>
           <ThemeToggle />
           <ClusterSelect />
-          <WalletButton />
         </div>
       </nav>
 
