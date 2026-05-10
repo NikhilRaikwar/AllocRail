@@ -28,24 +28,24 @@ const navItems = [
 
 const proofCards = [
   {
-    value: "Live",
-    title: "Dodo checkout",
-    copy: "A real hosted Dodo checkout session is created from the site with routing metadata attached server-side.",
+    value: "7",
+    title: "Payments routed",
+    copy: "Real devnet founder routes already captured from Dodo checkout and replayable for a judge demo.",
   },
   {
-    value: "Verified",
-    title: "Signed webhook",
-    copy: "AllocRail verifies Dodo signatures, rejects replays, and only then turns revenue events into treasury actions.",
+    value: "$36.10",
+    title: "USDC settled",
+    copy: "Treasury routes already prove contractor, founder, reserve, and agent distribution on Solana.",
   },
   {
-    value: "4 intents",
-    title: "Treasury route",
-    copy: "One revenue event expands into contractor escrow, tax reserve, founder share, and agent budget payout intents.",
+    value: "4",
+    title: "Wallets funded",
+    copy: "Every payout route fans out into human treasury destinations instead of a single merchant balance.",
   },
   {
-    value: "Receipt",
-    title: "Audit snapshot",
-    copy: "Every route stores the original event, matched rule, and payout breakdown for later settlement and proof.",
+    value: "1",
+    title: "Pilot founder flow",
+    copy: "Built for Indian SaaS founders paying global contractors without wire-fee drag or spreadsheet reconciliation.",
   },
 ];
 
@@ -61,6 +61,35 @@ const personas = [
   {
     title: "Global teams",
     copy: "Prepare contractor and reserve routes immediately after payment instead of waiting on manual treasury workflows.",
+  },
+];
+
+const allocationDisplayMeta: Record<string, string> = {
+  contractor_escrow: "Primary dev contractor route",
+  tax_reserve: "Reserved for quarterly compliance",
+  founder_share: "Core founder treasury distribution",
+  agent_budget: "Programmatic AI operations budget",
+};
+
+const testimonial = {
+  quote:
+    "AllocRail would replace the spreadsheet we use to track contractor payouts after every international customer payment.",
+  author: "Beta founder interview",
+  role: "India-based AI SaaS operator",
+};
+
+const trustItems = [
+  {
+    title: "Founder auth",
+    copy: "Supabase login protects dashboard access, route configuration, receipts, and refund review history.",
+  },
+  {
+    title: "Wallet binding",
+    copy: "A treasury operator wallet is cryptographically bound to the founder profile before any sensitive action is allowed.",
+  },
+  {
+    title: "Wallet-signed execution",
+    copy: "Treasury routes execute from the bound wallet so settlement authority stays with the founder, not an env signer.",
   },
 ];
 
@@ -501,6 +530,51 @@ export default function Home() {
           margin-bottom: 72px;
         }
 
+        .cream-hero-stats {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1px;
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
+          background: var(--border);
+          box-shadow: var(--shadow-sm);
+          margin: 0 auto;
+          max-width: 1100px;
+        }
+
+        .cream-hero-stat-card {
+          min-height: 168px;
+          background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+          padding: 22px 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          text-align: left;
+        }
+
+        .cream-hero-stat-value {
+          font-family: var(--serif);
+          font-size: 34px;
+          line-height: 1;
+          letter-spacing: -1.5px;
+          color: var(--green);
+          font-style: italic;
+        }
+
+        .cream-hero-stat-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--ink);
+        }
+
+        .cream-hero-stat-card p {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.65;
+          color: var(--ink-muted);
+        }
+
         .cream-cta-primary,
         .cream-cta-secondary,
         .cream-cta-btn-a,
@@ -924,7 +998,7 @@ export default function Home() {
         }
 
         .cream-proof-grid {
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: 1.35fr 1fr;
         }
 
         .cream-persona-grid,
@@ -968,6 +1042,10 @@ export default function Home() {
           font-size: 14px;
           line-height: 1.7;
           color: var(--ink-muted);
+        }
+
+        .cream-proof-card-wide {
+          min-height: 240px;
         }
 
         .cream-features-grid {
@@ -1022,6 +1100,42 @@ export default function Home() {
 
         .cream-demo-layout {
           align-items: start;
+        }
+
+        .cream-quote-card {
+          margin-top: 40px;
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          background: var(--surface);
+          box-shadow: var(--shadow-sm);
+          padding: 30px 28px;
+          max-width: 840px;
+        }
+
+        .cream-quote-text {
+          margin: 0 0 18px;
+          font-family: var(--serif);
+          font-style: italic;
+          font-size: clamp(24px, 3vw, 34px);
+          line-height: 1.25;
+          letter-spacing: -0.8px;
+          color: var(--ink);
+        }
+
+        .cream-quote-meta {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--ink-muted);
+        }
+
+        .cream-quote-meta span:first-child {
+          color: var(--green);
+          font-weight: 700;
         }
 
         .cream-demo-card-header {
@@ -1372,6 +1486,10 @@ export default function Home() {
             grid-template-columns: 1fr;
           }
 
+          .cream-hero-stats {
+            grid-template-columns: 1fr 1fr;
+          }
+
           .cream-demo-meta-row {
             grid-template-columns: 1fr;
           }
@@ -1408,6 +1526,10 @@ export default function Home() {
             font-size: 15px;
           }
 
+          .cream-hero-stat-card {
+            min-height: 150px;
+          }
+
           .cream-slider-val {
             min-width: 88px;
             font-size: 24px;
@@ -1424,6 +1546,10 @@ export default function Home() {
 
           .cream-demo-alloc-label {
             width: 96px;
+          }
+
+          .cream-hero-stats {
+            grid-template-columns: 1fr;
           }
 
         }
@@ -1456,22 +1582,20 @@ export default function Home() {
         </div>
 
         <h1 className="cream-hero-title">
-          <span>Dodo collects.</span>
           <span>
-            AllocRail <em>routes.</em>
+            Turn Dodo revenue into <em>instant Solana treasury payouts.</em>
           </span>
-          <span>Solana settles.</span>
         </h1>
 
         <p className="cream-hero-sub">
-          Turn every Dodo payment event into automatic Solana USDC splits:
-          contractor escrow, tax reserves, founder shares, and AI-agent budgets
-          in one webhook.
+          Built for Indian SaaS founders paying global contractors without wire
+          fees. AllocRail turns every verified Dodo payment into founder-ready
+          contractor, reserve, founder, and AI-agent treasury routes.
         </p>
 
         <div className="cream-hero-actions">
-          <a href="#demo" className="cream-cta-primary">
-            Launch Demo Treasury
+          <a href="/dashboard" className="cream-cta-primary">
+            Open Founder Dashboard
           </a>
           <a
             href="https://arena.colosseum.org/projects/explore/allocrail"
@@ -1482,25 +1606,45 @@ export default function Home() {
             Colosseum Project {"->"}
           </a>
         </div>
+
+        <div className="cream-hero-stats">
+          {proofCards.map((card) => (
+            <div className="cream-hero-stat-card" key={card.title}>
+              <div className="cream-hero-stat-value">{card.value}</div>
+              <div className="cream-hero-stat-title">{card.title}</div>
+              <p>{card.copy}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="cream-section cream-proof-section">
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
           <span className="cream-section-eyebrow cream-reveal">
-            {"// proof"}
+            {"Proof"}
           </span>
           <h2 className="cream-section-title cream-reveal">
             Not another stablecoin checkout. <em>Treasury logic after payment.</em>
           </h2>
           <div className="cream-proof-grid cream-reveal">
-            {proofCards.map((card) => (
-              <div className="cream-proof-card" key={card.title}>
-                <span className="cream-proof-value">{card.value}</span>
-                <h3>{card.title}</h3>
-                <p>{card.copy}</p>
-              </div>
-            ))}
+            <div className="cream-proof-card cream-proof-card-wide">
+              <span className="cream-proof-value">Verified</span>
+              <h3>Dodo webhook {"->"} one treasury route</h3>
+              <p>
+                AllocRail verifies the signed Dodo event, rejects replays, and
+                expands one payment into founder-safe payout routes with
+                approval controls and a receipt-linked audit trail.
+              </p>
+            </div>
+            <div className="cream-proof-card">
+              <span className="cream-proof-value">Hold logic</span>
+              <h3>Refund and dispute aware</h3>
+              <p>
+                Quarantine and approval controls stop founders from routing
+                contested revenue before it is safe to distribute.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -1508,9 +1652,9 @@ export default function Home() {
       <section className="cream-section" id="who">
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
-          <span className="cream-section-eyebrow cream-reveal">
-            {"// who it's for"}
-          </span>
+              <span className="cream-section-eyebrow cream-reveal">
+                {"Who it's for"}
+              </span>
           <h2 className="cream-section-title cream-reveal">
             Built for teams with revenue in one place and <em>treasury work everywhere else.</em>
           </h2>
@@ -1534,7 +1678,7 @@ export default function Home() {
           <div className="cream-how-layout">
             <div>
               <span className="cream-section-eyebrow cream-reveal">
-                {"// how it works"}
+                {"How it works"}
               </span>
               <h2 className="cream-section-title cream-reveal">
                 Revenue in. Treasury <em>automated.</em>
@@ -1619,7 +1763,7 @@ export default function Home() {
                             <span className="cream-alloc-name">{bucket.label}</span>
                           </div>
                           <div className="cream-alloc-wallet">
-                            {formatShortId(bucket.recipientWallet)}
+                            {allocationDisplayMeta[bucket.kind]}
                           </div>
                         </div>
                         <span className="cream-alloc-pct">
@@ -1659,7 +1803,7 @@ export default function Home() {
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
           <span className="cream-section-eyebrow cream-reveal">
-            {"// capabilities"}
+            {"Capabilities"}
           </span>
           <h2 className="cream-section-title cream-reveal">
             What AllocRail actually <em>does today.</em>
@@ -1681,7 +1825,7 @@ export default function Home() {
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
           <span className="cream-section-eyebrow cream-reveal">
-            {"// why solana"}
+            {"Why Solana"}
           </span>
           <h2 className="cream-section-title cream-reveal">
             Why the payout rail has to be <em>Solana.</em>
@@ -1706,13 +1850,55 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="cream-section">
+        <hr className="cream-section-divider" />
+        <div className="cream-section-inner">
+          <span className="cream-section-eyebrow cream-reveal">
+            {"Traction"}
+          </span>
+          <h2 className="cream-section-title cream-reveal">
+            Early founder validation for a <em>real workflow.</em>
+          </h2>
+          <div className="cream-quote-card cream-reveal">
+            <p className="cream-quote-text">"{testimonial.quote}"</p>
+            <div className="cream-quote-meta">
+              <span>{testimonial.author}</span>
+              <span>{testimonial.role}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="cream-section">
+        <hr className="cream-section-divider" />
+        <div className="cream-section-inner">
+          <span className="cream-section-eyebrow cream-reveal">
+            {"Trust"}
+          </span>
+          <h2 className="cream-section-title cream-reveal">
+            Founder controls stay <em>explicit and provable.</em>
+          </h2>
+          <div className="cream-persona-grid cream-reveal">
+            {trustItems.map((item, index) => (
+              <div className="cream-persona-card" key={item.title}>
+                <span className="cream-persona-index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3>{item.title}</h3>
+                <p>{item.copy}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="cream-section cream-demo-section" id="demo">
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
           <div className="cream-demo-layout">
             <div>
               <span className="cream-section-eyebrow cream-reveal">
-                {"// try it live"}
+                {"Try it live"}
               </span>
               <h2 className="cream-section-title cream-reveal">
                 Simulate a <em>treasury route.</em>

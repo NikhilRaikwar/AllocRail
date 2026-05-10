@@ -121,7 +121,7 @@ export default async function DashboardPayoutIntentsPage({
     <DashboardShell title="Payout Intents">
       <div className={styles.pageHeader}>
         <div>
-          <div className={styles.eyebrow}>// payout intents</div>
+          <div className={styles.eyebrow}>Settlement Queue</div>
           <h1 className={styles.pageTitle}>
             Treasury <em>Routes.</em>
           </h1>
@@ -325,56 +325,69 @@ export default async function DashboardPayoutIntentsPage({
                         return (
                           <tr key={intent.id}>
                             <td>
-                              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                                <span
-                                  className={`${styles.intentDot} ${dotClass}`}
-                                  style={{ width: 8, height: 8 }}
-                                />
-                                {bucket?.label ?? intent.bucketKind.replaceAll("_", " ")}
+                              <div className={styles.bucketCell}>
+                                <div className={styles.bucketTitle}>
+                                  <span
+                                    className={`${styles.intentDot} ${dotClass}`}
+                                    style={{ width: 8, height: 8 }}
+                                  />
+                                  {bucket?.label ?? intent.bucketKind.replaceAll("_", " ")}
+                                </div>
+                                <div className={styles.bucketMeta}>
+                                  {intent.requiresApproval
+                                    ? "Founder approval required before settlement."
+                                    : "Can settle immediately when route execution starts."}
+                                </div>
                               </div>
                             </td>
-                            <td
-                              className={`${styles.mono} ${styles.faint}`}
-                              style={{ fontSize: 10 }}
-                            >
-                              {shortId(intent.recipientWallet, 12, 4)}
+                            <td>
+                              <div className={styles.routeWalletBlock}>
+                                <span className={`${styles.mono} ${styles.routeWalletLabel}`}>
+                                  Recipient wallet
+                                </span>
+                                <span className={`${styles.mono} ${styles.faint}`}>
+                                  {shortId(intent.recipientWallet, 12, 4)}
+                                </span>
+                              </div>
                             </td>
-                            <td
-                              style={{
-                                fontFamily: "var(--font-dashboard-serif)",
-                                fontStyle: "italic",
-                                color: "var(--green)",
-                                fontSize: 15,
-                              }}
-                            >
-                              {formatMoney(intent.amountCents, intent.currency)}
+                            <td>
+                              <div className={styles.routeAmount}>
+                                {formatMoney(intent.amountCents, intent.currency)}
+                              </div>
+                              <div className={`${styles.mono} ${styles.routeAmountMeta}`}>
+                                treasury payout amount
+                              </div>
                             </td>
                             <td className={`${styles.mono} ${styles.muted}`}>
                               {bucket ? Math.round(bucket.percentageBps / 100) : 0}%
                             </td>
                             <td>
-                              <span className={`${styles.tag} ${statusTagClass}`}>
-                                {intent.status}
-                              </span>
-                              {intent.approvedAt || intent.rejectedAt ? (
-                                <div
-                                  className={`${styles.mono} ${styles.faint}`}
-                                  style={{ fontSize: 10, marginTop: 4, lineHeight: 1.4 }}
-                                >
-                                  {intent.approvedAt
-                                    ? `approved by ${intent.approvedByName ?? "founder"}`
-                                    : `rejected by ${intent.rejectedByName ?? "founder"}`}
-                                </div>
-                              ) : null}
+                              <div className={styles.statusBlock}>
+                                <span className={`${styles.tag} ${statusTagClass}`}>
+                                  {intent.status}
+                                </span>
+                                {intent.approvedAt || intent.rejectedAt ? (
+                                  <div className={`${styles.mono} ${styles.statusNote}`}>
+                                    {intent.approvedAt
+                                      ? `approved by ${intent.approvedByName ?? "founder"}`
+                                      : `rejected by ${intent.rejectedByName ?? "founder"}`}
+                                  </div>
+                                ) : null}
+                              </div>
                             </td>
                             <td>
-                              <span
-                                className={`${styles.tag} ${
-                                  intent.requiresApproval ? styles.tagRed : styles.tagMuted
-                                }`}
-                              >
-                                {intent.requiresApproval ? "Yes" : "No"}
-                              </span>
+                              <div className={styles.approvalBlock}>
+                                <span
+                                  className={`${styles.tag} ${
+                                    intent.requiresApproval ? styles.tagRed : styles.tagMuted
+                                  }`}
+                                >
+                                  {intent.requiresApproval ? "Yes" : "No"}
+                                </span>
+                                <span className={`${styles.mono} ${styles.approvalNote}`}>
+                                  {intent.requiresApproval ? "manual control" : "auto-eligible"}
+                                </span>
+                              </div>
                             </td>
                             <td style={{ minWidth: 180 }}>
                               {intent.solanaSignature ? (
@@ -395,7 +408,15 @@ export default async function DashboardPayoutIntentsPage({
                                   </span>
                                 </div>
                               ) : (
-                                <PayoutIntentActions intent={intent} />
+                                <div>
+                                  <div className={`${styles.mono} ${styles.txPending}`}>
+                                    No on-chain proof yet. Execute this route to raise the
+                                    wallet-signed settlement transaction.
+                                  </div>
+                                  <div style={{ marginTop: 8 }}>
+                                    <PayoutIntentActions intent={intent} />
+                                  </div>
+                                </div>
                               )}
                             </td>
                           </tr>

@@ -1,10 +1,15 @@
 # AllocRail
 
-**The programmable treasury layer after Dodo revenue lands.**
+**Turn Dodo revenue into instant Solana treasury payouts.**
 
-AllocRail is a founder-facing treasury router for SaaS and AI businesses using Dodo Payments. Dodo handles global checkout, subscriptions, usage billing, refunds, and verified payment events. AllocRail turns those verified revenue events into payout intents, approvals, audit receipts, and dashboard-visible Solana treasury routes for contractors, tax reserves, founder distributions, and AI-agent budgets.
+![Track](https://img.shields.io/badge/Track-Dodo%20Payments%20x%20Superteam%20India-1a6b4a?style=flat-square)
+![Network](https://img.shields.io/badge/Solana-Devnet%20USDC-3b6bb4?style=flat-square)
+![Stage](https://img.shields.io/badge/Status-Milestone%209%20Product%20Complete-5b3fa6?style=flat-square)
+![Copilot](https://img.shields.io/badge/AI-gpt--4o--mini-9b6e1a?style=flat-square)
 
-## What Judges Should See
+AllocRail is the programmable treasury layer after Dodo revenue lands. Dodo handles compliant checkout, subscriptions, credits, refunds, and verified billing events. AllocRail converts those verified revenue events into founder-controlled treasury routes for contractor payouts, tax reserves, founder distributions, and AI-agent budgets, then settles them on Solana with receipt-backed proof.
+
+## One-Line Demo
 
 ```text
 Dodo revenue comes in.
@@ -14,162 +19,178 @@ Solana settles it.
 Receipt proves it.
 ```
 
-Current demo artifacts:
+## Problem
 
-- landscape video: `allocrail-demo-video/out/allocrail-demo.mp4`
-- vertical social cut: `allocrail-demo-video/out/allocrail-social.mp4`
-- demo script: `docs/MILESTONE_9_DEMO_SCRIPT.md`
-- submission copy: `docs/SUBMISSION_COPY.md`
+SaaS and AI founders can collect money globally, but post-revenue treasury work is still manual:
+
+- contractor payouts still live in spreadsheets
+- tax reserves are tracked outside the billing system
+- refunds and disputes create real payout risk
+- cross-border wires are slow and expensive
+- there is no clean proof chain from customer payment to downstream treasury movement
+- AI-agent/tool spend is rarely isolated from founder treasury
+
+This is worse for Indian SaaS founders collecting globally and paying distributed teams across borders.
+
+## Solution
+
+AllocRail sits after Dodo revenue collection and before treasury settlement.
+
+It:
+
+- creates Dodo checkout sessions with treasury-routing metadata
+- verifies signed Dodo webhooks
+- enforces idempotency and replay protection
+- matches revenue to founder-defined allocation rules
+- generates payout intents with approval and hold controls
+- executes wallet-signed Solana USDC treasury payouts
+- records receipts that link Dodo events to Solana proof
+
+## Why This Project Fits the Dodo Track
+
+AllocRail uses Dodo in a meaningful way. It does not wrap Dodo checkout with cosmetic stablecoin branding. Dodo is the verified revenue source of truth for:
+
+- one-time payments
+- subscriptions
+- credit events
+- refunds
+- disputes
+- receipt source linkage
+
+AllocRail’s wedge is not checkout. It is **post-revenue treasury routing**.
+
+## Why Solana
+
+Solana is the payout rail, not decoration.
+
+- fast multi-recipient settlement
+- low-cost treasury operations
+- programmable payout routing
+- wallet-native execution
+- explorer-verifiable proof
+
+The result is better than spreadsheets plus bank transfers for this exact workflow.
 
 ## Core Flow
 
 ```text
-Dodo checkout -> verified webhook -> allocation rule -> payout intents -> founder approval / hold logic -> Solana devnet USDC transfers -> audit receipt
+Dodo checkout
+-> verified webhook
+-> allocation rule match
+-> payout intents
+-> founder approval / hold logic
+-> wallet-signed Solana USDC settlement
+-> audit receipt
 ```
 
-## Current Product Surface
+## Product Surfaces
 
-AllocRail now includes a founder dashboard with real pipeline visibility:
+- `/` landing page with track-specific positioning
+- `/login` founder auth
+- `/dashboard` overview with seeded demo state when no live routing data exists
+- `/dashboard/events` revenue event inbox
+- `/dashboard/payout-intents` grouped treasury queue
+- `/dashboard/receipts` proof history
+- `/dashboard/rules` allocation rule management + AI drafting
+- `/dashboard/settings` founder profile, wallet binding, treasury config
 
-- `/dashboard`
-- `/dashboard/events`
-- `/dashboard/payout-intents`
-- `/dashboard/receipts`
-- `/dashboard/rules`
-- `/dashboard/settings`
+## Trust Model
 
-The dashboard reads persisted routing state from Supabase when configured. If Supabase is not configured yet, the app falls back to process memory for local development only.
+- founder identity uses Supabase Auth
+- treasury operator wallet is cryptographically bound by signed challenge
+- sensitive payout actions require the bound wallet
+- refund/dispute flows can quarantine unsettled routes
+- receipts bind Dodo event data, allocation logic, and Solana proof into one audit surface
 
-## Who It Is For
+## What Is Built
 
-Remote-first SaaS and AI founders who collect global revenue but still manage contractor payouts, tax reserves, founder distributions, and agent/tool budgets manually.
+### Dodo integration
 
-## Why It Matters
+- real checkout session creation
+- routing metadata on checkout
+- verified webhook ingestion
+- idempotency protection
+- refund request flow
+- dispute/refund-aware payout holds
+- subscription lifecycle handling
+- credit event handling
 
-Global collection is getting easier, but post-revenue operations are still messy:
+### Treasury layer
 
-- spreadsheet-based revenue splits
-- slow Wise, PayPal, and bank payouts
-- manual tax reserve tracking
-- contractor reconciliation
-- no receipt connecting customer revenue to downstream payouts
-- uncontrolled AI-agent spend
+- allocation rules in basis points
+- payout intent generation
+- grouped payout routes by payment
+- approve / reject / execute controls
+- wallet-signed execution
+- treasury refill / FX configuration
+- audit receipts
 
-AllocRail uses Dodo webhooks as the revenue source of truth and Solana as the programmable settlement layer.
+### Founder experience
 
-## MVP Scope
+- non-empty seeded demo state for first-run judge sessions
+- dashboard stats and route visibility
+- receipt history and receipt proof view
+- CSV export for revenue events
+- AI treasury copilot:
+  - rule drafting
+  - queue summary
+  - budget-risk summary
 
-- Dodo checkout session creation with metadata for workspace, product, and allocation rule routing.
-- Verified Dodo webhook handler with idempotency.
-- Allocation rules for contractor payout, tax reserve, founder share, and AI-agent budget buckets.
-- Founder dashboard for revenue events, payout intents, receipts, and allocation rules.
-- Solana devnet USDC multi-recipient payout path for Milestone 5.
-- Supabase-backed storage for webhook idempotency, revenue events, payout intents, receipts, and allocation rules.
-- Receipt page linking Dodo event IDs to settlement state and real Solana transaction signatures.
-- Founder profile settings backed by Supabase auth metadata and founder profile records.
-- Cryptographically verified treasury operator wallet binding for founder approval and execution controls.
-- Founder-managed treasury refill mode and FX source configuration with explicit INR/USD routing basis.
-- Refund request flow from the Revenue Events inbox with Dodo refund receipt linkage.
-- Quarantine / hold logic for refund and dispute events before unsettled Solana payout execution.
-- Grouped payout routes by payment ID with route-level filtering for ops review.
-- AI treasury copilot for rule drafting, queue summaries, and budget-risk summaries.
-- Optional Anchor PDA treasury vault for policy-enforced payouts.
+## Architecture
 
-## Current API Surface
-
-```text
-GET /api/health
-GET /api/allocrail/demo
-GET /api/allocrail/events
-GET /api/allocrail/payout-intents
-GET /api/allocrail/receipts
-GET /api/allocrail/payments/[paymentId]/receipt
-POST /api/allocrail/payments/[paymentId]/refund
-GET /api/allocrail/refunds/[refundId]/receipt
-POST /api/allocrail/copilot/rule-draft
-POST /api/allocrail/copilot/reconcile-summary
-POST /api/allocrail/copilot/budget-summary
-GET /api/dodo/checkout
-POST /api/dodo/checkout
-GET /api/dodo/webhook
-POST /api/dodo/webhook
+```mermaid
+flowchart LR
+  A["Customer pays via Dodo"] --> B["Verified Dodo webhook"]
+  B --> C["AllocRail rule match"]
+  C --> D["Payout intents"]
+  D --> E["Founder approval / hold logic"]
+  E --> F["Bound wallet signs execution"]
+  F --> G["Solana USDC settlement"]
+  G --> H["Receipt links Dodo event to Solana proof"]
 ```
 
-`/api/health` reports non-secret environment readiness for Dodo and Solana configuration.
+## Competitive Positioning
 
-`/api/allocrail/demo` returns a demo Dodo revenue event, allocation rule, payout intents, and validation checks.
+Colosseum Copilot validation for this project surfaced the crowded cluster as **Stablecoin Payment Rails and Infrastructure**. Similar entries include projects like `Tributary`, `x402 Agnic Hub`, and `Pistis Pay`.
 
-`/api/allocrail/events`, `/api/allocrail/payout-intents`, and `/api/allocrail/receipts` expose the current routing pipeline state after verified webhooks are processed.
+The important conclusion is:
 
-`/api/allocrail/payments/[paymentId]/refund` creates a Dodo refund request and immediately holds open payout intents for that payment route.
+- generic payment rails are crowded
+- generic billing automation is crowded
+- “payments” by itself is not a strong differentiator
 
-`/api/allocrail/payments/[paymentId]/receipt` and `/api/allocrail/refunds/[refundId]/receipt` proxy live Dodo payment/refund PDFs for founder download.
+AllocRail’s strongest wedge is:
 
-`/api/allocrail/events?format=csv` exports the stored revenue events as CSV for dashboard download.
+**Dodo revenue in -> founder-controlled treasury routing -> Solana settlement proof**
 
-`/api/allocrail/copilot/rule-draft`, `/api/allocrail/copilot/reconcile-summary`, and `/api/allocrail/copilot/budget-summary` power the Milestone 8 copilot features and are constrained to `gpt-4o-mini` structured outputs.
+## Current Status
 
-`/api/dodo/checkout` creates a Dodo checkout session in test mode with AllocRail metadata:
-
-```text
-workspace_id
-merchant_id
-rule_id
-product_tag
-```
-
-## Milestone Status
+Completed:
 
 - Milestone 1: API foundation
-- Milestone 2: live Dodo checkout flow
-- Milestone 3: verified webhook routing pipeline
+- Milestone 2: Dodo checkout
+- Milestone 3: verified webhook routing
 - Milestone 4: founder dashboard
-- Milestone 5: Solana devnet USDC settlement proof with durable Supabase persistence and founder auth
-- Milestone 6: approval controls and safety guardrails
-- Milestone 7: deeper Dodo semantic integration for subscriptions and credit events
-- Milestone 8: AI treasury copilot with rule drafting, queue summaries, and budget guard
-- Production hardening: verified wallet-to-founder binding and treasury refill / FX source architecture
+- Milestone 5: Solana devnet USDC settlement
+- Milestone 6: approvals and safety guardrails
+- Milestone 7: deeper Dodo semantic coverage
+- Milestone 8: treasury copilot
+- Milestone 9 product work: founder demo flow and branded treasury surfaces
 
-Next:
+Current build verification:
 
-- Milestone 9: submission polish, trust layer, and demo hardening
-
-## Milestone 9 Direction
-
-Milestone 9 is about making the project judge-ready:
-
-- simplify the founder story to one actionable payout route per billing cycle
-- foreground Dodo as the verified revenue source
-- foreground Solana as the programmable settlement rail
-- de-emphasize generic checkout or subscription-infra positioning
-- show proof through a crisp dashboard-to-settlement-to-receipt demo
-
-Colosseum Copilot research confirms the crowded part of the market is generic stablecoin checkout and payment-infrastructure tooling. AllocRail's strongest wedge is the post-revenue treasury layer for SaaS and AI founders.
-
-## Demo Video Artifact
-
-The current Milestone 9 video cut lives at:
-
-```text
-allocrail-demo-video/out/allocrail-demo.mp4
-```
-
-It is a landscape-first product demo built in Remotion and centered on:
-
-```text
-Dodo payment -> payout route -> founder approval -> Solana settlement -> receipt proof
-```
+- `npm run build` passes
 
 ## Stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | Next.js, React, TypeScript, Tailwind |
-| Solana client | `@solana/kit`, wallet-standard |
-| Program | Anchor scaffold, planned PDA treasury vault |
-| Payments | Dodo Payments checkout, metadata, webhooks |
-| Data | Supabase Postgres for rules, events, payout intents, receipts, and webhook idempotency |
-| Devnet token | Solana devnet USDC |
+| Frontend | Next.js, React, TypeScript |
+| Payments | Dodo Payments |
+| Storage | Supabase |
+| Solana client | `@solana/web3.js`, `@solana/spl-token`, wallet-standard |
+| Program path | Anchor scaffold for future policy vault |
+| AI | OpenAI `gpt-4o-mini` |
 
 Devnet USDC mint:
 
@@ -179,19 +200,19 @@ Devnet USDC mint:
 
 ## Local Development
 
-Install dependencies:
+Install:
 
 ```bash
 npm install
 ```
 
-Create local environment variables:
+Configure env:
 
 ```bash
 cp .env.example .env
 ```
 
-Required Supabase variables:
+Required variables:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -201,7 +222,7 @@ OPENAI_API_KEY
 OPENAI_BASE_URL
 ```
 
-Apply the current Supabase migrations in order:
+Apply Supabase migrations:
 
 ```text
 supabase/migrations/20260507_allocrail_milestone_6.sql
@@ -211,7 +232,7 @@ supabase/migrations/20260508_allocrail_founder_rls.sql
 supabase/migrations/20260509_allocrail_wallet_binding_treasury_config.sql
 ```
 
-Start the app:
+Run:
 
 ```bash
 npm run dev
@@ -223,45 +244,20 @@ Open:
 http://localhost:3000
 ```
 
-Anchor setup requires the Anchor CLI. The scaffold includes an Anchor workspace under `anchor/`, but program build/deploy is optional for the first Dodo-to-devnet-USDC MVP.
+## Hackathon Packaging
 
-When Supabase is configured, events, payout intents, receipts, founder profiles, rules, refund metadata, and webhook idempotency survive server restarts. Without Supabase, the app falls back to in-memory storage and should be treated as local-only.
+Phase 7 submission assets live in:
 
-## Current Architecture Notes
-
-- Dodo is the verified revenue source of truth.
-- Solana devnet USDC is the programmable payout rail.
-- Founder approval and refund/dispute holds now sit between revenue ingestion and on-chain execution.
-- Founder approval, rejection, and execution now require a bound treasury operator wallet.
-- Current settlement execution is wallet-signed by the bound founder wallet, not an env-funded treasury signer.
-- Treasury refill mode and FX source are now explicit founder-managed settings rather than hidden routing assumptions.
-- Milestone 8 copilot calls are constrained to `gpt-4o-mini` and use structured JSON outputs only.
-
-## Agentic Engineering Context
-
-This repo was scaffolded from the validated AllocRail idea context using solana.new/Superstack workflow:
-
-```text
-find-next-crypto-idea -> .superstack/idea-context.md
-scaffold-project      -> reads .superstack/idea-context.md
-build-with-claude     -> writes .superstack/build-context.md
-deploy-to-mainnet     -> reads .superstack/build-context.md
-```
-
-Included context:
-
-- `.superstack/idea-context.md`
-- `.superstack/build-context.md`
-- `docs/GRANT_APPLICATION.md`
-- `docs/AGENTIC_ENGINEERING_EVIDENCE.md`
-- `docs/ALLOC_RAIL_BUILD_PLAN.md`
-- `docs/ALLOC_RAIL_DODO_TRACK_PLAN.md`
+- `docs/SUBMISSION_COPY.md`
+- `docs/HACKATHON_SUBMISSION.html`
+- `docs/PITCH_DECK.md`
+- `docs/PITCH_DECK.html`
 
 ## Links
 
-- Colosseum: https://arena.colosseum.org/projects/explore/allocrail
-- X: https://x.com/AllocRail
-- GitHub: https://github.com/NikhilRaikwar/AllocRail
+- GitHub: [NikhilRaikwar/AllocRail](https://github.com/NikhilRaikwar/AllocRail)
+- Colosseum: [AllocRail on Colosseum](https://arena.colosseum.org/projects/explore/allocrail)
+- X: [@AllocRail](https://x.com/AllocRail)
 
 ## License
 

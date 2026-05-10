@@ -23,9 +23,7 @@ export default async function DashboardReceiptsPage() {
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <div className={styles.cardTitle}>Receipt History</div>
-          <span className={`${styles.tag} ${styles.tagMuted}`}>
-            Dodo + Solana linked
-          </span>
+          <span className={`${styles.tag} ${styles.tagMuted}`}>Dodo + Solana linked</span>
         </div>
         <div className={styles.cardBodyFlush}>
           {snapshot.receipts.length === 0 ? (
@@ -56,43 +54,39 @@ export default async function DashboardReceiptsPage() {
               const settlementCount = receipt.payoutIntents.filter(
                 (intent) => intent.explorerUrl
               ).length;
+              const settledTotal = receipt.payoutIntents.reduce(
+                (sum, intent) => sum + intent.amountCents,
+                0
+              );
+              const statusTagClass =
+                settlementLabel === "confirmed"
+                  ? styles.tagGreen
+                  : settlementLabel === "quarantined" ||
+                      settlementLabel === "approval blocked" ||
+                      settlementLabel === "partial failure"
+                    ? styles.tagRed
+                    : styles.tagAmber;
 
               return (
                 <div className={styles.receiptRow} key={receipt.id}>
                   <div className={styles.receiptBadge} aria-hidden="true">
                     {"\u25C8"}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      className={styles.mono}
-                      style={{
-                        fontSize: 11,
-                        color: "var(--ink-muted)",
-                        marginBottom: 3,
-                      }}
-                    >
-                      {receipt.id}
+                  <div className={styles.receiptMain}>
+                    <div className={`${styles.mono} ${styles.receiptId}`}>{receipt.id}</div>
+                    <div className={styles.receiptTitleRow}>
+                      <div className={styles.receiptTitle}>
+                        {receipt.revenueEvent.type} {"->"} {receipt.allocationRule.name}
+                      </div>
+                      <span className={`${styles.tag} ${statusTagClass}`}>{settlementLabel}</span>
                     </div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
-                      {receipt.revenueEvent.type} {"->"} {receipt.allocationRule.name}
+                    <div className={`${styles.mono} ${styles.receiptContext}`}>
+                      {receipt.payoutIntents.length} intents {"·"}{" "}
+                      {receipt.revenueEvent.dodoPaymentId ?? "-"} {"·"}{" "}
+                      {receipt.revenueEvent.checkoutSessionId} {"·"} Solana proof{" "}
+                      {settlementCount > 0 ? "attached" : "waiting"}
                     </div>
-                    <div
-                      className={styles.mono}
-                      style={{ fontSize: 10, color: "var(--ink-faint)" }}
-                    >
-                      {receipt.payoutIntents.length} intents ·{" "}
-                      {receipt.revenueEvent.dodoPaymentId ?? "-"} ·{" "}
-                      {receipt.revenueEvent.checkoutSessionId} · Solana:{" "}
-                      {settlementLabel}
-                    </div>
-                    <div
-                      className={styles.mono}
-                      style={{
-                        fontSize: 10,
-                        color: "var(--ink-faint)",
-                        marginTop: 4,
-                      }}
-                    >
+                    <div className={`${styles.mono} ${styles.receiptSourceLine}`}>
                       source:{" "}
                       {formatMoney(
                         receipt.revenueEvent.amountCents,
@@ -100,43 +94,22 @@ export default async function DashboardReceiptsPage() {
                       )}
                     </div>
                   </div>
-                  <div style={{ flexShrink: 0, textAlign: "right", minWidth: 140 }}>
-                    <div
-                      className={styles.statValue}
-                      style={{
-                        fontSize: 15,
-                        color: "var(--green)",
-                        marginBottom: 0,
-                      }}
-                    >
-                      {formatMoney(
-                        receipt.payoutIntents.reduce(
-                          (sum, intent) => sum + intent.amountCents,
-                          0
-                        ),
-                        "USDC"
-                      )}
+                  <div className={styles.receiptAmountBlock}>
+                    <div className={styles.receiptPrimaryAmount}>
+                      {formatMoney(settledTotal, "USDC")}
                     </div>
-                    <div
-                      className={styles.mono}
-                      style={{
-                        fontSize: 10,
-                        color: "var(--ink-faint)",
-                        marginTop: 3,
-                      }}
-                    >
+                    <div className={`${styles.mono} ${styles.receiptMetaLine}`}>
                       {formatTimestamp(receipt.revenueEvent.receivedAt)}
                     </div>
                     <a
                       href={`/dashboard/receipts/${receipt.id}`}
-                      className={styles.explorerLink}
-                      style={{ fontSize: 10 }}
+                      className={styles.proofLink}
                     >
                       {settlementCount > 0
-                        ? `view ${settlementCount} settlement${
+                        ? `open proof · ${settlementCount} settlement${
                             settlementCount === 1 ? "" : "s"
                           }`
-                        : "open receipt"}
+                        : "open proof"}
                     </a>
                   </div>
                 </div>

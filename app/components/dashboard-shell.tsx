@@ -97,7 +97,7 @@ export function DashboardShell({ title, children }: DashboardShellProps) {
               metadata={metadata}
               email="founder-demo@allocrail.dev"
               name="AllocRail Demo Customer"
-              label="Start Demo Checkout"
+              label="Run Demo Payment"
               className=""
               buttonClassName={styles.sidebarCheckoutButton}
               sessionClassName={styles.sidebarCheckoutMeta}

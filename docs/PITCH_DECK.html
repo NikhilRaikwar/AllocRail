@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllocRail Pitch Deck</title>
+  <style>
+    :root {
+      --cream: #f5f0e8;
+      --cream-dark: #ede7d9;
+      --ink: #1a1714;
+      --ink-soft: #3d3830;
+      --ink-muted: #7a7268;
+      --green: #1a6b4a;
+      --blue: #3b6bb4;
+      --purple: #5b3fa6;
+      --amber: #9b6e1a;
+      --border: rgba(26,23,20,0.12);
+      --serif: Georgia, serif;
+      --sans: Inter, system-ui, sans-serif;
+      --mono: "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+    .deck {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+    .slide {
+      min-height: 580px;
+      background: #fffdfa;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 36px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-muted);
+      margin-bottom: 12px;
+    }
+    h1, h2 {
+      font-family: var(--serif);
+      font-style: italic;
+      letter-spacing: -0.03em;
+      margin: 0 0 14px;
+    }
+    h1 { font-size: 52px; line-height: 1.02; }
+    h2 { font-size: 40px; line-height: 1.08; }
+    p, li { font-size: 18px; line-height: 1.6; color: var(--ink-soft); }
+    ul { margin: 0; padding-left: 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      background: var(--cream);
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: var(--green);
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      border-radius: 16px;
+      background: var(--cream-dark);
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 16px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .notes {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--ink-muted);
+    }
+    @media (max-width: 800px) {
+      .slide { min-height: auto; padding: 24px; }
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 38px; }
+      h2 { font-size: 30px; }
+      p, li { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 1 · Title</div>
+        <h1>AllocRail</h1>
+        <h2>Turn Dodo revenue into instant Solana treasury payouts.</h2>
+      </div>
+      <div class="notes">Speaker note: Dodo already solves collection. AllocRail handles the treasury layer after revenue lands.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 2 · Problem</div>
+        <h2>Global revenue is easier than global treasury.</h2>
+        <ul>
+          <li>Contractor splits still live in spreadsheets.</li>
+          <li>Tax reserves are tracked outside the billing system.</li>
+          <li>Refunds and disputes create payout risk.</li>
+          <li>Cross-border treasury workflows stay manual after payment succeeds.</li>
+        </ul>
+      </div>
+      <div class="notes">Speaker note: The painful part starts after checkout, not before it.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 3 · Solution</div>
+        <h2>AllocRail is the programmable treasury layer after Dodo revenue lands.</h2>
+        <pre>Dodo checkout
+-> verified webhook
+-> allocation rule match
+-> payout intents
+-> founder approval / hold logic
+-> wallet-signed Solana settlement
+-> audit receipt</pre>
+      </div>
+      <div class="notes">Speaker note: This is treasury routing and control, not another checkout wrapper.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 4 · Why Dodo + Solana</div>
+        <div class="grid">
+          <div class="card">
+            <h3>Dodo</h3>
+            <p>Checkout, subscriptions, credits, refunds, and verified billing events.</p>
+          </div>
+          <div class="card">
+            <h3>Solana</h3>
+            <p>Fast, low-cost, multi-recipient treasury settlement with explorer-verifiable proof.</p>
+          </div>
+        </div>
+      </div>
+      <div class="notes">Speaker note: Dodo is the source of truth. Solana is the payout rail. AllocRail is the control layer between them.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 5 · Product Proof</div>
+        <h2>What is already built.</h2>
+        <ul>
+          <li>Verified Dodo webhooks with idempotency</li>
+          <li>Founder dashboard with seeded demo state</li>
+          <li>Grouped payout routes and wallet binding</li>
+          <li>Wallet-signed execution</li>
+          <li>Refund/dispute hold logic</li>
+          <li>Receipt proof linked to Solana settlement</li>
+        </ul>
+      </div>
+      <div class="notes">Speaker note: The product has a real founder flow from revenue event to receipt.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 6 · Competitive Wedge</div>
+        <h2>Validated against Colosseum Copilot.</h2>
+        <p>Similar entries still cluster around stablecoin payment rails and billing infrastructure. That cluster is crowded. AllocRail is stronger when framed as post-revenue treasury routing for SaaS and AI founders.</p>
+      </div>
+      <div class="notes">Speaker note: We deliberately avoid competing with Dodo on checkout and with generic stablecoin rails on category language.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 7 · India Angle</div>
+        <h2>Built for Indian SaaS founders paying global contractors.</h2>
+        <p>Dodo handles global revenue collection. AllocRail handles stablecoin treasury distribution after that revenue lands. This is a direct fit for the Superteam India track.</p>
+      </div>
+      <div class="notes">Speaker note: The regional wedge is not consumer remittance. It is founder treasury operations.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 8 · Trust</div>
+        <h2>Founder controls stay explicit and provable.</h2>
+        <ul>
+          <li>Supabase founder auth</li>
+          <li>Bound treasury operator wallet</li>
+          <li>Wallet-signed payout execution</li>
+          <li>Refund/dispute-aware holds</li>
+          <li>Receipt-backed proof surface</li>
+        </ul>
+      </div>
+      <div class="notes">Speaker note: This is not blind automation. The founder stays in control of treasury execution.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 9 · Vision</div>
+        <h2>From human revenue to machine budgets.</h2>
+        <p>Today AllocRail routes contractors, founder treasury, tax reserves, and AI-agent budgets. Next it can fund more autonomous machine spending flows on top of the same revenue truth.</p>
+      </div>
+      <div class="notes">Speaker note: AI-agent budget routing is a natural extension, but the current product already stands on treasury utility alone.</div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="eyebrow">Slide 10 · Close</div>
+        <h2>Dodo revenue in. Founder control in the middle. Solana proof out.</h2>
+        <p>AllocRail turns the messy post-revenue layer into a programmable treasury workflow.</p>
+      </div>
+      <div class="notes">Speaker note: That is the whole story and it is the one judges should remember.</div>
+    </section>
+  </div>
+</body>
+</html>

@@ -104,6 +104,16 @@ export function buildAllocRailReceiptHtml(receipt: AllocRailReceipt) {
     : null;
   const auditDownloadHref = `${appUrl}/api/allocrail/receipts/${receipt.id}/download`;
   const receiptsHref = `${appUrl}/dashboard/receipts`;
+  const primaryExplorerHref =
+    receipt.payoutIntents.find((intent) => intent.explorerUrl)?.explorerUrl ?? null;
+  const proofSummary =
+    status === "Confirmed"
+      ? "Funds settled on Solana and the treasury route is fully proven."
+      : status === "Quarantined"
+        ? "This route is held. AllocRail blocked settlement until the founder resolves the risk."
+        : status === "Approval Blocked"
+          ? "Founder controls stopped this route before any irreversible treasury movement."
+          : "The route is recorded and waiting for execution or final settlement proof.";
 
   const allocationLegend = receipt.allocationRule.buckets
     .map(
@@ -214,6 +224,13 @@ export function buildAllocRailReceiptHtml(receipt: AllocRailReceipt) {
   .receipt-settled-amount{font-family:var(--serif);font-size:28px;font-style:italic;letter-spacing:-1px;color:#14f195;line-height:1}
   .receipt-settled-label{font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:rgba(20,241,149,.55);margin-bottom:8px}
   .receipt-meta{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--border)}
+  .receipt-proof-band{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg, rgba(212,234,224,.45), rgba(255,255,255,.9))}
+  .proof-copy{display:flex;flex-direction:column;gap:4px}
+  .proof-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+  .proof-text{font-size:13px;font-weight:600;color:var(--ink)}
+  .proof-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .proof-link{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:8px;border:1px solid rgba(26,107,74,.2);background:var(--green-pale);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+  .proof-link-secondary{background:var(--surface);border-color:var(--border-strong);color:var(--ink-soft)}
   .meta-cell{padding:14px 18px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
   .meta-cell:nth-child(even){border-right:none}
   .meta-cell:nth-last-child(-n+2){border-bottom:none}
@@ -292,7 +309,7 @@ export function buildAllocRailReceiptHtml(receipt: AllocRailReceipt) {
           <div class="receipt-brand">
             <span class="receipt-brand-name">AllocRail</span>
           </div>
-          <div class="receipt-eyebrow">// audit receipt</div>
+          <div class="receipt-eyebrow">audit receipt</div>
           <div class="receipt-main-title">Treasury Settlement</div>
           <div class="receipt-subtitle">Dodo Revenue &rarr; Solana USDC Routes</div>
         </div>
@@ -315,6 +332,20 @@ export function buildAllocRailReceiptHtml(receipt: AllocRailReceipt) {
             formatMoney(total, "USDC")
           )}</div>
         </div>
+      </div>
+    </div>
+    <div class="receipt-proof-band">
+      <div class="proof-copy">
+        <div class="proof-eyebrow">Proof moment</div>
+        <div class="proof-text">${escapeHtml(proofSummary)}</div>
+      </div>
+      <div class="proof-links">
+        ${
+          primaryExplorerHref
+            ? `<a href="${escapeHtml(primaryExplorerHref)}" class="proof-link" target="_blank" rel="noreferrer">Open Solana proof</a>`
+            : ""
+        }
+        <a href="${auditDownloadHref}" class="proof-link proof-link-secondary" download>Download receipt</a>
       </div>
     </div>
     <div class="receipt-meta">

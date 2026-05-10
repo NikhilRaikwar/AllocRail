@@ -22,12 +22,15 @@ export default async function DashboardOverviewPage() {
     <DashboardShell title="Overview">
       <div className={styles.pageHeader}>
         <div>
-          <div className={styles.eyebrow}>// overview</div>
+          <div className={styles.eyebrow}>Overview</div>
           <h1 className={styles.pageTitle}>
             Treasury <em>at a glance.</em>
           </h1>
         </div>
         <div className={styles.pageActions}>
+          {snapshot.seededDemo ? (
+            <span className={`${styles.tag} ${styles.tagBlue}`}>Demo data loaded</span>
+          ) : null}
           <a href="/dashboard/events" className={styles.secondaryButton}>
             Events
           </a>
@@ -110,6 +113,11 @@ export default async function DashboardOverviewPage() {
           <div>
             <div className={styles.cardEyebrow}>judge demo path</div>
             <div className={styles.demoStoryTitle}>One founder workflow from revenue to receipt.</div>
+            {snapshot.seededDemo ? (
+              <div className={styles.statSub} style={{ marginTop: 8 }}>
+                Demo mode is preloaded so judges see a realistic treasury route on first load.
+              </div>
+            ) : null}
           </div>
           <div className={styles.demoStoryActions}>
             <a href="/dashboard/payout-intents" className={styles.primaryButton}>

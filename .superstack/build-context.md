@@ -47,10 +47,10 @@ Dodo test checkout
 
 ## Immediate Next Steps
 
-1. Finalize Milestone 9 submission-quality polish around the founder treasury story.
-2. Refine the rendered Remotion demo cut and produce social variants if needed.
-3. Decide whether to move from founder-signed direct execution to a policy-vault / multisig treasury.
-4. Prepare final judge-facing submission copy and video script.
+1. Package the final submission narrative, screenshots, and demo script around the post-revenue treasury story.
+2. Record the final demo video using the seeded founder dashboard, payout queue, and receipt proof surfaces.
+3. Add pilot proof or a small mainnet validation path if time permits.
+4. Decide whether to move from founder-signed direct execution to a policy-vault / multisig treasury after the hackathon build.
 
 ## Build Status
 
@@ -109,6 +109,7 @@ Current dashboard verification:
 - Theme toggle, cluster selector, and wallet UI remain mounted in the dashboard shell.
 - Dashboard sidebar demo checkout launches a real Dodo test checkout session.
 - Revenue events CSV export is wired to live stored event data.
+- When no live routing data exists yet, the dashboard now seeds a realistic founder demo state so judges do not land on an empty treasury surface.
 
 Current known constraints:
 

@@ -54,3 +54,9 @@ test-ledger/
 # local planning / codex artifacts
 /.artifacts/
 /docs/ALLOC_RAIL_10_10_WINNER_PLAN.md
+/.agents/
+skills-lock.json
+
+# remotion demo workspace outputs
+/allocrail-demo-video/node_modules/
+/allocrail-demo-video/out/

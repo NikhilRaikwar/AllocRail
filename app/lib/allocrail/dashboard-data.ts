@@ -4,6 +4,7 @@ import {
   listRecentReceipts,
   listRecentRevenueEvents,
 } from "@/app/lib/allocrail/event-store";
+import { getSeededDashboardState } from "@/app/lib/allocrail/demo-data";
 import type {
   AllocationBucketKind,
   AllocationRule,
@@ -102,15 +103,26 @@ export type DashboardSnapshot = {
   };
   bucketSummaries: BucketSummary[];
   latestReceiptBucketSummaries: BucketSummary[];
+  seededDemo: boolean;
 };
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
-  const [events, payoutIntents, receipts, allocationRules] = await Promise.all([
+  let [events, payoutIntents, receipts, allocationRules] = await Promise.all([
     listRecentRevenueEvents(),
     listRecentPayoutIntents(),
     listRecentReceipts(),
     listAllocationRules(),
   ]);
+  let seededDemo = false;
+
+  if (events.length === 0 && payoutIntents.length === 0 && receipts.length === 0) {
+    const seededState = getSeededDashboardState();
+    events = seededState.events;
+    payoutIntents = seededState.payoutIntents;
+    receipts = seededState.receipts;
+    allocationRules = seededState.allocationRules;
+    seededDemo = true;
+  }
   const latestReceipt = receipts.find(isMeaningfulReceipt) ?? receipts[0] ?? null;
   const latestEvent =
     events.find(
@@ -203,6 +215,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       latestReceiptIntents,
       allocationRule
     ),
+    seededDemo,
   };
 }
 

@@ -226,7 +226,7 @@
 
 .sidebarActionCard {
   margin-bottom: 16px;
-  padding: 12px;
+  padding: 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -246,14 +246,29 @@
 .sidebarCheckoutButton {
   width: 100%;
   justify-content: center;
-  padding: 9px 12px;
-  border-radius: 8px;
-  background: var(--ink);
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--green);
   color: var(--cream);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   border: none;
   cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(26, 107, 74, 0.24);
+  animation: sidebarPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes sidebarPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 107, 74, 0.24);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(26, 107, 74, 0);
+    transform: translateY(-1px);
+  }
 }
 
 .sidebarCheckoutMeta {
@@ -752,6 +767,11 @@
   align-items: flex-start;
   gap: 14px;
   padding: 16px 20px;
+  transition: background 0.15s ease;
+}
+
+.receiptRow:hover {
+  background: color-mix(in srgb, var(--surface) 92%, var(--cream-dark) 8%);
 }
 
 .receiptBadge {
@@ -767,6 +787,82 @@
   color: var(--ink-soft);
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
+}
+
+.receiptMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.receiptId {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+}
+
+.receiptTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.receiptTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.receiptContext {
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+.receiptSourceLine {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.receiptAmountBlock {
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 168px;
+}
+
+.receiptPrimaryAmount {
+  font-family: var(--font-dashboard-serif), Georgia, serif;
+  font-size: 24px;
+  font-style: italic;
+  color: var(--green);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.receiptMetaLine {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.proofLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(26, 107, 74, 0.2);
+  background: var(--green-pale);
+  color: var(--green);
+  font-family: var(--font-dashboard-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
 }
 
 .intentDot {
@@ -862,7 +958,89 @@
   vertical-align: middle;
 }
 
+.table tbody tr:hover td {
+  background: color-mix(in srgb, var(--surface) 92%, var(--cream-dark) 8%);
+}
+
 .table tr:last-child td { border-bottom: none; }
+
+.bucketCell {
+  min-width: 180px;
+}
+
+.bucketTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.bucketMeta {
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+.routeWalletBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.routeWalletLabel {
+  font-size: 10px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.routeAmount {
+  font-family: var(--font-dashboard-serif), Georgia, serif;
+  font-style: italic;
+  color: var(--green);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.routeAmountMeta {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.statusBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.statusNote {
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+
+.approvalBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.approvalNote {
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.txPending {
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
 
 .muted { color: var(--ink-muted); }
 .faint { color: var(--ink-faint); }

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllocRail Hackathon Submission</title>
+  <style>
+    :root {
+      --cream: #f5f0e8;
+      --cream-dark: #ede7d9;
+      --ink: #1a1714;
+      --ink-soft: #3d3830;
+      --ink-muted: #7a7268;
+      --green: #1a6b4a;
+      --green-pale: #d4eae0;
+      --blue: #3b6bb4;
+      --purple: #5b3fa6;
+      --amber: #9b6e1a;
+      --border: rgba(26, 23, 20, 0.12);
+      --serif: Georgia, serif;
+      --sans: Inter, system-ui, sans-serif;
+      --mono: "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+    .hero {
+      background: #fffdfa;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+    }
+    h1, h2 {
+      font-family: var(--serif);
+      font-style: italic;
+      letter-spacing: -0.03em;
+      margin: 0 0 12px;
+    }
+    h1 { font-size: 44px; line-height: 1.05; }
+    h2 { font-size: 28px; margin-top: 34px; }
+    .sub {
+      font-size: 18px;
+      color: var(--ink-soft);
+      max-width: 760px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card, .section {
+      background: #fffdfa;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .card {
+      padding: 18px;
+    }
+    .section {
+      padding: 24px;
+      margin-top: 20px;
+    }
+    .label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+    .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green);
+    }
+    ul {
+      margin: 12px 0 0 18px;
+      padding: 0;
+    }
+    code, pre {
+      font-family: var(--mono);
+      background: var(--cream-dark);
+      border-radius: 10px;
+    }
+    pre {
+      padding: 16px;
+      overflow: auto;
+      border: 1px solid var(--border);
+    }
+    .links a {
+      color: var(--blue);
+      text-decoration: none;
+      margin-right: 16px;
+    }
+    .quote {
+      border-left: 3px solid var(--green);
+      padding-left: 16px;
+      color: var(--ink-soft);
+      font-size: 17px;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">Dodo Payments x Superteam India x Solana Frontier</div>
+      <h1>AllocRail</h1>
+      <p class="sub">Turn Dodo revenue into instant Solana treasury payouts.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="label">User</div>
+          <div class="value">SaaS and AI founders</div>
+          <div>Built for Indian and global founders paying distributed contractors and teams.</div>
+        </div>
+        <div class="card">
+          <div class="label">Wedge</div>
+          <div class="value">Post-revenue treasury routing</div>
+          <div>Not another checkout product. Dodo handles collection; AllocRail handles treasury routing after revenue lands.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="label">Problem</div>
+      <h2>Global revenue is easier than global treasury.</h2>
+      <ul>
+        <li>Founders still split revenue in spreadsheets after payment lands.</li>
+        <li>Contractor payouts, tax reserves, and founder distributions are disconnected from billing truth.</li>
+        <li>Refunds and disputes create payout risk if routes execute too early.</li>
+        <li>There is no clean proof chain from customer payment to downstream treasury movement.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="label">Solution</div>
+      <h2>AllocRail is the programmable treasury layer after Dodo revenue lands.</h2>
+      <pre>Dodo checkout
+-> verified webhook
+-> allocation rule match
+-> payout intents
+-> founder approval / hold logic
+-> wallet-signed Solana USDC settlement
+-> audit receipt</pre>
+    </div>
+
+    <div class="section">
+      <div class="label">Why this fits the track</div>
+      <h2>Meaningful Dodo integration plus real-world stablecoin utility.</h2>
+      <ul>
+        <li>Dodo checkout sessions include routing metadata.</li>
+        <li>Signed Dodo webhooks are verified and idempotent.</li>
+        <li>Subscriptions, credits, refunds, and disputes all feed treasury logic.</li>
+        <li>Solana USDC is used for real multi-recipient treasury settlement, not just a token badge.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="label">Proof</div>
+      <h2>What is already built.</h2>
+      <ul>
+        <li>Founder dashboard with seeded demo treasury state</li>
+        <li>Revenue event inbox and grouped payout routes</li>
+        <li>Wallet binding and wallet-signed execution</li>
+        <li>Refund / dispute hold logic</li>
+        <li>Receipt history linking Dodo revenue to Solana proof</li>
+        <li>AI treasury copilot for rule drafting and queue summaries</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="label">Competitive framing</div>
+      <h2>Validated against Colosseum Copilot.</h2>
+      <p>Copilot search still places similar projects in the crowded <strong>Stablecoin Payment Rails and Infrastructure</strong> cluster, including entries like Tributary and Pistis Pay. That is why AllocRail is packaged as a treasury operations product, not as generic payment infrastructure.</p>
+    </div>
+
+    <div class="section">
+      <div class="label">Founder validation</div>
+      <h2>Early demand signal.</h2>
+      <p class="quote">“AllocRail would replace the spreadsheet we use to track contractor payouts after every international customer payment.”</p>
+    </div>
+
+    <div class="section links">
+      <div class="label">Links</div>
+      <h2>Project links.</h2>
+      <a href="https://github.com/NikhilRaikwar/AllocRail">GitHub</a>
+      <a href="https://arena.colosseum.org/projects/explore/allocrail">Colosseum</a>
+      <a href="https://x.com/AllocRail">X</a>
+    </div>
+  </div>
+</body>
+</html>
