@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { findRevenueEventByReference } from "@/app/lib/allocrail/event-store";
+import { claimRevenueRouteByReference } from "@/app/lib/allocrail/claim";
 import { formatMoney, shortId } from "@/app/lib/allocrail/dashboard-data";
+import { findRevenueEventByReference } from "@/app/lib/allocrail/event-store";
+import { getSupabaseServerClient } from "@/app/lib/supabase/server";
 import styles from "./page.module.css";
 
 function firstValue(
@@ -19,6 +21,21 @@ function firstValue(
   return undefined;
 }
 
+function buildClaimNextPath(args: {
+  paymentId?: string;
+  checkoutSessionId?: string;
+  subscriptionId?: string;
+}) {
+  const params = new URLSearchParams();
+  if (args.paymentId) params.set("payment_id", args.paymentId);
+  if (args.checkoutSessionId) {
+    params.set("checkout_session_id", args.checkoutSessionId);
+  }
+  if (args.subscriptionId) params.set("subscription_id", args.subscriptionId);
+  params.set("claim", "1");
+  return `/checkout/success?${params.toString()}`;
+}
+
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
@@ -34,6 +51,12 @@ export default async function CheckoutSuccessPage({
     "sessionId"
   );
   const subscriptionId = firstValue(params, "subscription_id", "subscriptionId");
+  const claimRequested = firstValue(params, "claim") === "1";
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const matchedEvent = await findRevenueEventByReference({
     paymentId,
@@ -45,6 +68,23 @@ export default async function CheckoutSuccessPage({
   const resolvedAmount = matchedEvent
     ? formatMoney(matchedEvent.amountCents, matchedEvent.currency)
     : null;
+  const claimedRoute =
+    user && (paymentId || checkoutSessionId || subscriptionId)
+      ? await claimRevenueRouteByReference({
+          paymentId,
+          checkoutSessionId,
+          subscriptionId,
+        }).catch(() => undefined)
+      : undefined;
+  const routeHref = resolvedPaymentId
+    ? `/dashboard/payout-intents?payment=${encodeURIComponent(resolvedPaymentId)}`
+    : "/dashboard/payout-intents";
+  const claimNext = buildClaimNextPath({
+    paymentId,
+    checkoutSessionId,
+    subscriptionId,
+  });
+  const showClaimPrompt = !user && Boolean(paymentId || checkoutSessionId || subscriptionId);
 
   return (
     <main className={styles.page}>
@@ -71,9 +111,9 @@ export default async function CheckoutSuccessPage({
         </h1>
 
         <p className={styles.copy}>
-          Your Dodo payment was completed successfully. You can download the
-          Dodo receipt below, then open the founder dashboard to review the
-          revenue route inside AllocRail.
+          {showClaimPrompt
+            ? "Your Dodo payment was completed successfully. Create or sign into AllocRail to claim this treasury route and view it inside your founder dashboard."
+            : "Your Dodo payment was completed successfully. You can download the Dodo receipt below, then open the founder dashboard to review the revenue route inside AllocRail."}
         </p>
 
         <div className={styles.card}>
@@ -93,7 +133,11 @@ export default async function CheckoutSuccessPage({
           ) : null}
 
           <div className={styles.notice}>
-            AllocRail will show the corresponding revenue route in the dashboard.
+            {user
+              ? claimRequested && claimedRoute?.revenueEvent
+                ? "This revenue route is now linked to your founder workspace."
+                : "AllocRail will show the corresponding revenue route in the dashboard."
+              : "Sign in or create an account to attach this payment to your AllocRail founder workspace."}
           </div>
 
           <div className={styles.actions}>
@@ -106,13 +150,32 @@ export default async function CheckoutSuccessPage({
               </a>
             ) : null}
 
-            <Link href="/dashboard" className={styles.secondaryButton}>
-              Open dashboard
-            </Link>
+            {showClaimPrompt ? (
+              <>
+                <Link
+                  href={`/signup?next=${encodeURIComponent(claimNext)}`}
+                  className={styles.primaryButton}
+                >
+                  Create account to claim route
+                </Link>
+                <Link
+                  href={`/login?next=${encodeURIComponent(claimNext)}`}
+                  className={styles.secondaryButton}
+                >
+                  Sign in to view route
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard" className={styles.secondaryButton}>
+                  Open dashboard
+                </Link>
 
-            <Link href="/dashboard/events" className={styles.secondaryButton}>
-              Open revenue routes
-            </Link>
+                <Link href={routeHref} className={styles.secondaryButton}>
+                  Open revenue route
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

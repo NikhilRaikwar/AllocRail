@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AuthShell } from "@/app/components/auth/auth-shell";
 import styles from "@/app/components/auth/auth-shell.module.css";
@@ -30,30 +29,31 @@ function GoogleMark() {
   );
 }
 
-export function LoginForm({ next }: { next: string }) {
-  const router = useRouter();
+export function SignupForm({ next }: { next: string }) {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const title = useMemo(
     () => (
       <>
-        Login to
+        Create your
         <br />
-        <em>your treasury.</em>
+        <em>workspace.</em>
       </>
     ),
-    [],
+    []
   );
 
   return (
     <AuthShell
-      eyebrow="// founder access"
+      eyebrow="// founder onboarding"
       title={title}
-      copy="Sign in to your AllocRail workspace. Wallet connect stays a treasury utility inside the dashboard."
+      copy="Create an AllocRail founder account. After email confirmation, you can access the dashboard and connect your treasury wallet there."
     >
       <form
         className={styles.stack}
@@ -61,26 +61,50 @@ export function LoginForm({ next }: { next: string }) {
           event.preventDefault();
           setLoading(true);
           setError(null);
+          setSuccess(null);
           const supabase = getSupabaseBrowserClient();
-          const { error } = await supabase.auth.signInWithPassword({
+          const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+          const { error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+              emailRedirectTo: redirectTo,
+              data: {
+                full_name: fullName,
+              },
+            },
           });
           setLoading(false);
           if (error) {
             setError(error.message);
             return;
           }
-          router.push(next);
-          router.refresh();
+          setSuccess(
+            "Account created. Check your email to confirm your address, then access your treasury dashboard."
+          );
         }}
       >
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="login-email">
+          <label className={styles.label} htmlFor="signup-name">
+            Full name
+          </label>
+          <input
+            id="signup-name"
+            type="text"
+            className={styles.input}
+            placeholder="Your name"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            autoComplete="name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="signup-email">
             Email
           </label>
           <input
-            id="login-email"
+            id="signup-email"
             type="email"
             className={styles.input}
             placeholder="founder@yourcompany.com"
@@ -92,18 +116,18 @@ export function LoginForm({ next }: { next: string }) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="login-password">
+          <label className={styles.label} htmlFor="signup-password">
             Password
           </label>
           <div className={styles.inputWrap}>
             <input
-              id="login-password"
+              id="signup-password"
               type={showPassword ? "text" : "password"}
               className={`${styles.input} ${styles.inputPassword}`}
-              placeholder="************"
+              placeholder="Min. 8 characters"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
+              autoComplete="new-password"
               minLength={8}
               required
             />
@@ -119,24 +143,23 @@ export function LoginForm({ next }: { next: string }) {
         </div>
 
         {error ? <div className={styles.alertError}>{error}</div> : null}
+        {success ? <div className={styles.alertSuccess}>{success}</div> : null}
 
         <button className={styles.button} disabled={loading} type="submit">
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Creating..." : "Create account"}
         </button>
 
         <div className={styles.secondaryLinks}>
           <Link
-            href={`/signup?next=${encodeURIComponent(next)}`}
+            href={`/login?next=${encodeURIComponent(next)}`}
             className={styles.link}
           >
-            Create account
-          </Link>
-          <Link href="/forgot-password" className={styles.linkMuted}>
-            Forgot password
+            Already have an account?{" "}
+            <span className={styles.linkAccent}>{"Login ->"}</span>
           </Link>
         </div>
 
-        <div className={styles.divider}>or continue with</div>
+        <div className={styles.divider}>or sign up with</div>
 
         <div className={styles.socialBtns}>
           <button
