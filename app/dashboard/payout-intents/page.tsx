@@ -1,5 +1,6 @@
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { PayoutIntentActions } from "@/app/components/payout-intent-actions";
+import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
 import {
   formatMoney,
   formatTimestamp,
@@ -39,6 +40,7 @@ export default async function DashboardPayoutIntentsPage({
     date?: string;
   }>;
 }) {
+  const founder = await requireCurrentFounder();
   const snapshot = await getDashboardSnapshot();
   const allocationRule = snapshot.allocationRule;
   const params = (await searchParams) ?? {};
@@ -414,7 +416,12 @@ export default async function DashboardPayoutIntentsPage({
                                     wallet-signed settlement transaction.
                                   </div>
                                   <div style={{ marginTop: 8 }}>
-                                    <PayoutIntentActions intent={intent} />
+                                    <PayoutIntentActions
+                                      intent={intent}
+                                      boundWalletAddress={
+                                        founder.treasuryOperatorWallet
+                                      }
+                                    />
                                   </div>
                                 </div>
                               )}

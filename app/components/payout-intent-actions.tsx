@@ -40,7 +40,13 @@ async function post(path: string, walletAddress?: string, body?: unknown) {
   return payload;
 }
 
-export function PayoutIntentActions({ intent }: { intent: PayoutIntent }) {
+export function PayoutIntentActions({
+  intent,
+  boundWalletAddress,
+}: {
+  intent: PayoutIntent;
+  boundWalletAddress?: string;
+}) {
   const router = useRouter();
   const { wallet } = useWallet();
   const { cluster } = useCluster();
@@ -71,6 +77,18 @@ export function PayoutIntentActions({ intent }: { intent: PayoutIntent }) {
     setError(null);
     startTransition(async () => {
       try {
+        if (!wallet?.account.address) {
+          throw new Error(
+            "Connect the bound treasury operator wallet before executing payouts."
+          );
+        }
+
+        if (boundWalletAddress && wallet.account.address !== boundWalletAddress) {
+          throw new Error(
+            "Connected wallet does not match the bound treasury operator wallet."
+          );
+        }
+
         if (!wallet?.sendTransaction) {
           throw new Error("Connected wallet cannot send transactions.");
         }

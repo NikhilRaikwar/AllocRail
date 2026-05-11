@@ -128,53 +128,53 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const founder = await requireBoundFounderWallet(req);
-  const { id } = await params;
-  const intent = await getPayoutIntentById(id);
-  const body = (await req.json().catch(() => ({}))) as {
-    action?: "prepare" | "confirm";
-    signature?: string;
-    submittedAt?: string;
-  };
-
-  if (!intent) {
-    return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
-  }
-
-  if (!canExecute(intent.status, intent.requiresApproval)) {
-    return NextResponse.json(
-      { error: `Payout intent ${id} is not executable from status ${intent.status}` },
-      { status: 409 }
-    );
-  }
-
-  if ((body.action ?? "prepare") === "prepare") {
-    const env = getAppEnvironment();
-    return NextResponse.json({
-      ok: true,
-      executionPlan: {
-        payoutIntentId: intent.id,
-        authorityWallet: founder.treasuryOperatorWallet,
-        recipientWallet: intent.recipientWallet,
-        amountCents: intent.amountCents,
-        amountBaseUnits: centsToTokenUnits(intent.amountCents, 6).toString(),
-        currency: intent.currency,
-        mintAddress: env.solanaUsdcMint,
-        decimals: 6,
-        cluster: env.solanaCluster,
-        rpcUrl: env.solanaRpcUrl,
-      },
-    });
-  }
-
-  if (!body.signature) {
-    return NextResponse.json(
-      { error: "Wallet execution signature is required." },
-      { status: 400 }
-    );
-  }
-
   try {
+    const founder = await requireBoundFounderWallet(req);
+    const { id } = await params;
+    const intent = await getPayoutIntentById(id);
+    const body = (await req.json().catch(() => ({}))) as {
+      action?: "prepare" | "confirm";
+      signature?: string;
+      submittedAt?: string;
+    };
+
+    if (!intent) {
+      return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
+    }
+
+    if (!canExecute(intent.status, intent.requiresApproval)) {
+      return NextResponse.json(
+        { error: `Payout intent ${id} is not executable from status ${intent.status}` },
+        { status: 409 }
+      );
+    }
+
+    if ((body.action ?? "prepare") === "prepare") {
+      const env = getAppEnvironment();
+      return NextResponse.json({
+        ok: true,
+        executionPlan: {
+          payoutIntentId: intent.id,
+          authorityWallet: founder.treasuryOperatorWallet,
+          recipientWallet: intent.recipientWallet,
+          amountCents: intent.amountCents,
+          amountBaseUnits: centsToTokenUnits(intent.amountCents, 6).toString(),
+          currency: intent.currency,
+          mintAddress: env.solanaUsdcMint,
+          decimals: 6,
+          cluster: env.solanaCluster,
+          rpcUrl: env.solanaRpcUrl,
+        },
+      });
+    }
+
+    if (!body.signature) {
+      return NextResponse.json(
+        { error: "Wallet execution signature is required." },
+        { status: 400 }
+      );
+    }
+
     const settlement = await verifyWalletExecutedTransfer({
       signature: body.signature,
       authorityWallet: founder.treasuryOperatorWallet!,
@@ -198,14 +198,28 @@ export async function POST(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to confirm wallet-executed payout";
+    const { id } = await params;
 
-    const failed = await updatePayoutIntent(id, (current) => ({
-      ...current,
-      status: "failed",
-      failedAt: new Date().toISOString(),
-      failureReason: message,
-    }));
+    try {
+      const failed = await updatePayoutIntent(id, (current) => ({
+        ...current,
+        status: "failed",
+        failedAt: new Date().toISOString(),
+        failureReason: message,
+      }));
 
-    return NextResponse.json({ error: message, payoutIntent: failed }, { status: 500 });
+      return NextResponse.json({ error: message, payoutIntent: failed }, { status: 500 });
+    } catch {
+      const status =
+        message === "Unauthorized"
+          ? 401
+          : message.includes("does not match") ||
+              message.includes("Connect the bound treasury operator wallet") ||
+              message.includes("Bind a treasury operator wallet")
+            ? 400
+            : 500;
+
+      return NextResponse.json({ error: message }, { status });
+    }
   }
 }

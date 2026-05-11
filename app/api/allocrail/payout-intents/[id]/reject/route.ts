@@ -3,46 +3,53 @@ import {
   getPayoutIntentById,
   updatePayoutIntent,
 } from "@/app/lib/allocrail/event-store";
-import { requireBoundFounderWallet } from "@/app/lib/allocrail/founder";
+import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
 
 export const runtime = "nodejs";
 
 export async function POST(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const founder = await requireBoundFounderWallet(req);
-  const { id } = await params;
-  const intent = await getPayoutIntentById(id);
+  try {
+    const founder = await requireCurrentFounder();
+    const { id } = await params;
+    const intent = await getPayoutIntentById(id);
 
-  if (!intent) {
-    return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
+    if (!intent) {
+      return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
+    }
+
+    if (intent.status !== "pending_approval" && intent.status !== "approved") {
+      return NextResponse.json(
+        {
+          error: `Payout intent ${id} cannot be rejected from status ${intent.status}`,
+        },
+        { status: 409 }
+      );
+    }
+
+    const updated = await updatePayoutIntent(id, (current) => ({
+      ...current,
+      status: "rejected",
+      rejectedByUserId: founder.userId,
+      rejectedByName: founder.fullName,
+      rejectedAt: new Date().toISOString(),
+      approvedByUserId: undefined,
+      approvedByName: undefined,
+      approvedAt: undefined,
+      failureReason: "Rejected by founder approval control",
+      failedAt: undefined,
+    }));
+
+    return NextResponse.json({
+      ok: true,
+      payoutIntent: updated,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to reject payout intent";
+    const status = message === "Unauthorized" ? 401 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
-
-  if (intent.status !== "pending_approval" && intent.status !== "approved") {
-    return NextResponse.json(
-      {
-        error: `Payout intent ${id} cannot be rejected from status ${intent.status}`,
-      },
-      { status: 409 }
-    );
-  }
-
-  const updated = await updatePayoutIntent(id, (current) => ({
-    ...current,
-    status: "rejected",
-    rejectedByUserId: founder.userId,
-    rejectedByName: founder.fullName,
-    rejectedAt: new Date().toISOString(),
-    approvedByUserId: undefined,
-    approvedByName: undefined,
-    approvedAt: undefined,
-    failureReason: "Rejected by founder approval control",
-    failedAt: undefined,
-  }));
-
-  return NextResponse.json({
-    ok: true,
-    payoutIntent: updated,
-  });
 }
