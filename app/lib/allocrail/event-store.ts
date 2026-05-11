@@ -18,6 +18,10 @@ type EventStoreState = {
   rules: AllocationRule[];
 };
 
+type EventStoreScope = {
+  workspaceIds?: string[];
+};
+
 type ReceiptRow = {
   id: string;
   revenue_event_id: string;
@@ -255,8 +259,27 @@ function toPayoutIntentRow(intent: PayoutIntent): PayoutIntentRow {
   };
 }
 
-async function loadSupabaseState() {
+async function loadSupabaseState(scope?: EventStoreScope) {
   const supabase = getSupabaseAdmin();
+  const workspaceIds = scope?.workspaceIds?.filter(Boolean) ?? [];
+
+  if (scope?.workspaceIds && workspaceIds.length === 0) {
+    return {
+      events: [] as RevenueEvent[],
+      payoutIntents: [] as PayoutIntent[],
+      receipts: [] as AllocRailReceipt[],
+      rules: [] as AllocationRule[],
+    };
+  }
+
+  let rulesQuery = supabase
+    .from("allocation_rules")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (workspaceIds.length > 0) {
+    rulesQuery = rulesQuery.in("workspace_id", workspaceIds);
+  }
 
   const [eventsResult, payoutIntentsResult, receiptsResult, rulesResult] =
     await Promise.all([
@@ -264,21 +287,18 @@ async function loadSupabaseState() {
         .from("revenue_events")
         .select("*")
         .order("received_at", { ascending: false })
-        .limit(MAX_EVENTS),
+        .limit(MAX_EVENTS * 10),
       supabase
         .from("payout_intents")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(MAX_EVENTS * 4),
+        .limit(MAX_EVENTS * 20),
       supabase
         .from("receipts")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(MAX_EVENTS),
-      supabase
-        .from("allocation_rules")
-        .select("*")
-        .order("updated_at", { ascending: false }),
+        .limit(MAX_EVENTS * 10),
+      rulesQuery,
     ]);
 
   for (const result of [
@@ -292,21 +312,31 @@ async function loadSupabaseState() {
     }
   }
 
-  const events: RevenueEvent[] = (eventsResult.data ?? []).map((row: unknown) =>
-    mapRevenueEventRow(row as RevenueEventRow)
-  );
+  const events: RevenueEvent[] = (eventsResult.data ?? [])
+    .map((row: unknown) => mapRevenueEventRow(row as RevenueEventRow))
+    .filter((event: RevenueEvent) =>
+      workspaceIds.length > 0
+        ? workspaceIds.includes(event.metadata.workspace_id)
+        : true
+    )
+    .slice(0, MAX_EVENTS);
   const payoutIntents: PayoutIntent[] = (payoutIntentsResult.data ?? []).map((row: unknown) =>
     mapPayoutIntentRow(row as PayoutIntentRow)
   );
-  const rules: AllocationRule[] = (rulesResult.data ?? []).map((row: unknown) =>
-    mapRuleRow(row as AllocationRuleRow)
-  );
+  const rules: AllocationRule[] = (rulesResult.data ?? [])
+    .map((row: unknown) => mapRuleRow(row as AllocationRuleRow))
+    .filter((rule: AllocationRule) =>
+      workspaceIds.length > 0 ? workspaceIds.includes(rule.workspaceId) : true
+    );
 
   const eventsById = new Map(events.map((event: RevenueEvent) => [event.id, event]));
   const rulesById = new Map(rules.map((rule: AllocationRule) => [rule.id, rule]));
   const intentsByEventId = new Map<string, PayoutIntent[]>();
 
   for (const intent of payoutIntents as PayoutIntent[]) {
+    if (!eventsById.has(intent.revenueEventId)) {
+      continue;
+    }
     const existing = intentsByEventId.get(intent.revenueEventId) ?? [];
     existing.push(intent);
     intentsByEventId.set(intent.revenueEventId, existing);
@@ -386,21 +416,21 @@ export async function recordWebhookDelivery(webhookId: string): Promise<void> {
   }
 }
 
-export async function listAllocationRules(): Promise<AllocationRule[]> {
+export async function listAllocationRules(scope?: EventStoreScope): Promise<AllocationRule[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().rules;
   }
 
-  const { rules } = await loadSupabaseState();
+  const { rules } = await loadSupabaseState(scope);
   return rules.filter((rule) => rule.enabled);
 }
 
-export async function listAllAllocationRules(): Promise<AllocationRule[]> {
+export async function listAllAllocationRules(scope?: EventStoreScope): Promise<AllocationRule[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().rules;
   }
 
-  const { rules } = await loadSupabaseState();
+  const { rules } = await loadSupabaseState(scope);
   return rules;
 }
 
@@ -584,37 +614,38 @@ export async function recordWebhookEvent(
   }
 }
 
-export async function listRecentRevenueEvents(): Promise<RevenueEvent[]> {
+export async function listRecentRevenueEvents(scope?: EventStoreScope): Promise<RevenueEvent[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().events;
   }
 
-  const { events } = await loadSupabaseState();
+  const { events } = await loadSupabaseState(scope);
   return events;
 }
 
-export async function listRecentPayoutIntents(): Promise<PayoutIntent[]> {
+export async function listRecentPayoutIntents(scope?: EventStoreScope): Promise<PayoutIntent[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().payoutIntents;
   }
 
-  const { payoutIntents } = await loadSupabaseState();
+  const { payoutIntents } = await loadSupabaseState(scope);
   return payoutIntents;
 }
 
-export async function listRecentReceipts(): Promise<AllocRailReceipt[]> {
+export async function listRecentReceipts(scope?: EventStoreScope): Promise<AllocRailReceipt[]> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().receipts;
   }
 
-  const { receipts } = await loadSupabaseState();
+  const { receipts } = await loadSupabaseState(scope);
   return receipts;
 }
 
 export async function getReceiptById(
-  id: string
+  id: string,
+  scope?: EventStoreScope
 ): Promise<AllocRailReceipt | undefined> {
-  const receipts = await listRecentReceipts();
+  const receipts = await listRecentReceipts(scope);
   return receipts.find((receipt) => receipt.id === id);
 }
 
@@ -626,7 +657,7 @@ export async function findRevenueEventByReference({
   paymentId?: string;
   checkoutSessionId?: string;
   subscriptionId?: string;
-}): Promise<RevenueEvent | undefined> {
+}, scope?: EventStoreScope): Promise<RevenueEvent | undefined> {
   if (!paymentId && !checkoutSessionId && !subscriptionId) {
     return undefined;
   }
@@ -664,7 +695,19 @@ export async function findRevenueEventByReference({
     throw new Error(error.message);
   }
 
-  return data ? mapRevenueEventRow(data as RevenueEventRow) : undefined;
+  const event = data ? mapRevenueEventRow(data as RevenueEventRow) : undefined;
+  if (!event) {
+    return undefined;
+  }
+
+  if (
+    scope?.workspaceIds &&
+    !scope.workspaceIds.includes(event.metadata.workspace_id)
+  ) {
+    return undefined;
+  }
+
+  return event;
 }
 
 export async function findRecurringRouteForSubscriptionCycle(args: {
@@ -827,9 +870,10 @@ export async function updateRevenueEventById(
 
 export async function updateRevenueEventByPaymentId(
   paymentId: string,
-  updater: (event: RevenueEvent) => RevenueEvent
+  updater: (event: RevenueEvent) => RevenueEvent,
+  scope?: EventStoreScope
 ): Promise<RevenueEvent | undefined> {
-  const revenueEvent = await findRevenueEventByReference({ paymentId });
+  const revenueEvent = await findRevenueEventByReference({ paymentId }, scope);
   if (!revenueEvent) {
     return undefined;
   }
@@ -838,10 +882,16 @@ export async function updateRevenueEventByPaymentId(
 }
 
 export async function getPayoutIntentById(
-  id: string
+  id: string,
+  scope?: EventStoreScope
 ): Promise<PayoutIntent | undefined> {
   if (!isSupabaseConfigured()) {
     return loadMemoryState().payoutIntents.find((intent) => intent.id === id);
+  }
+
+  if (scope?.workspaceIds) {
+    const { payoutIntents } = await loadSupabaseState(scope);
+    return payoutIntents.find((intent) => intent.id === id);
   }
 
   const supabase = getSupabaseAdmin();
@@ -860,7 +910,8 @@ export async function getPayoutIntentById(
 
 export async function updatePayoutIntent(
   id: string,
-  updater: (intent: PayoutIntent) => PayoutIntent
+  updater: (intent: PayoutIntent) => PayoutIntent,
+  scope?: EventStoreScope
 ): Promise<PayoutIntent | undefined> {
   if (!isSupabaseConfigured()) {
     const state = getMemoryState();
@@ -893,7 +944,7 @@ export async function updatePayoutIntent(
     return finalIntent;
   }
 
-  const current = await getPayoutIntentById(id);
+  const current = await getPayoutIntentById(id, scope);
   if (!current) {
     return undefined;
   }

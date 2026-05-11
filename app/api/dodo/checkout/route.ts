@@ -4,6 +4,10 @@ import {
   getDefaultRoutingMetadata,
 } from "@/app/lib/allocrail/dodo";
 import { getAppEnvironment } from "@/app/lib/allocrail/env";
+import {
+  ensureCurrentFounderRoutingProfile,
+  provisionStandaloneRoutingProfile,
+} from "@/app/lib/allocrail/founder";
 import { parseDodoRoutingMetadata } from "@/app/lib/allocrail/metadata";
 
 export const runtime = "nodejs";
@@ -75,12 +79,30 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const requestedMetadata = toMetadata(body.metadata);
+    let metadata = requestedMetadata;
+
+    try {
+      metadata = await ensureCurrentFounderRoutingProfile({
+        productTag: requestedMetadata.product_tag,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        metadata = await provisionStandaloneRoutingProfile({
+          productTag: requestedMetadata.product_tag,
+          workspaceName: `AllocRail checkout for ${email}`,
+        });
+      } else {
+        throw error;
+      }
+    }
+
     const session = await createDodoCheckoutSession({
       email,
       name: toStringOrUndefined(body.name),
       productId: toStringOrUndefined(body.productId),
       quantity: toQuantity(body.quantity),
-      metadata: toMetadata(body.metadata),
+      metadata,
     });
 
     return NextResponse.json({

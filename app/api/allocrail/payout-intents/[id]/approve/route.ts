@@ -3,7 +3,10 @@ import {
   getPayoutIntentById,
   updatePayoutIntent,
 } from "@/app/lib/allocrail/event-store";
-import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
+import {
+  listCurrentFounderOwnedWorkspaceIds,
+  requireCurrentFounder,
+} from "@/app/lib/allocrail/founder";
 
 export const runtime = "nodejs";
 
@@ -13,8 +16,9 @@ export async function POST(
 ) {
   try {
     const founder = await requireCurrentFounder();
+    const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
     const { id } = await params;
-    const intent = await getPayoutIntentById(id);
+    const intent = await getPayoutIntentById(id, { workspaceIds });
 
     if (!intent) {
       return NextResponse.json({ error: "Payout intent not found" }, { status: 404 });
@@ -39,7 +43,7 @@ export async function POST(
       rejectedAt: undefined,
       failureReason: undefined,
       failedAt: undefined,
-    }));
+    }), { workspaceIds });
 
     return NextResponse.json({
       ok: true,

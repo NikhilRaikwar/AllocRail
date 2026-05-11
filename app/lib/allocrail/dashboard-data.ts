@@ -4,6 +4,7 @@ import {
   listRecentReceipts,
   listRecentRevenueEvents,
 } from "@/app/lib/allocrail/event-store";
+import { listCurrentFounderOwnedWorkspaceIds } from "@/app/lib/allocrail/founder";
 import { getSeededDashboardState } from "@/app/lib/allocrail/demo-data";
 import type {
   AllocationBucketKind,
@@ -107,15 +108,21 @@ export type DashboardSnapshot = {
 };
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
+  const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
   let [events, payoutIntents, receipts, allocationRules] = await Promise.all([
-    listRecentRevenueEvents(),
-    listRecentPayoutIntents(),
-    listRecentReceipts(),
-    listAllocationRules(),
+    listRecentRevenueEvents({ workspaceIds }),
+    listRecentPayoutIntents({ workspaceIds }),
+    listRecentReceipts({ workspaceIds }),
+    listAllocationRules({ workspaceIds }),
   ]);
   let seededDemo = false;
 
-  if (events.length === 0 && payoutIntents.length === 0 && receipts.length === 0) {
+  if (
+    workspaceIds.length > 0 &&
+    events.length === 0 &&
+    payoutIntents.length === 0 &&
+    receipts.length === 0
+  ) {
     const seededState = getSeededDashboardState();
     events = seededState.events;
     payoutIntents = seededState.payoutIntents;

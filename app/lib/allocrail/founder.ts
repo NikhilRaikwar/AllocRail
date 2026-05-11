@@ -1,6 +1,9 @@
 import { getSupabaseAdmin } from "./supabase";
 import { getSupabaseServerClient } from "@/app/lib/supabase/server";
+import { demoAllocationRule } from "./demo-data";
 import type {
+  AllocationRule,
+  DodoRoutingMetadata,
   FounderProfile,
   TreasuryFxSource,
   TreasuryRefillMode,
@@ -53,6 +56,31 @@ function mapFounderProfileRow(row: FounderProfileRow): FounderProfile {
 function sanitizeWalletAddress(walletAddress?: string | null) {
   const value = walletAddress?.trim();
   return value && value.length > 0 ? value : undefined;
+}
+
+function sanitizeSlug(value: string) {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return slug || "default";
+}
+
+function buildFounderWorkspaceId(userId: string) {
+  return `wrk_founder_${userId.replace(/-/g, "")}`;
+}
+
+function buildFounderRuleId(userId: string, productTag: string) {
+  return `rule_founder_${userId.replace(/-/g, "")}_${sanitizeSlug(productTag)}`;
+}
+
+function buildAnonymousWorkspaceId() {
+  return `wrk_checkout_${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+function buildAnonymousRuleId(productTag: string) {
+  return `rule_checkout_${sanitizeSlug(productTag)}_${crypto.randomUUID().replace(/-/g, "")}`;
 }
 
 function parseTreasuryRefillMode(value: string): TreasuryRefillMode {
@@ -144,6 +172,25 @@ async function loadFounderProfileRow(userId: string) {
   return (data as FounderProfileRow | null) ?? null;
 }
 
+export async function listCurrentFounderOwnedWorkspaceIds(): Promise<string[]> {
+  const founder = await requireCurrentFounder();
+  const admin = getSupabaseAdmin();
+  const { data, error } = await admin
+    .from("workspaces")
+    .select("id")
+    .eq("owner_user_id", founder.userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? [])
+    .map((row: { id?: unknown }) =>
+      row && typeof row.id === "string" ? row.id : null
+    )
+    .filter((value: string | null): value is string => Boolean(value));
+}
+
 export async function requireCurrentFounder(): Promise<FounderProfile> {
   const user = await requireAuthUser();
   const existingProfile = await loadFounderProfileRow(user.id);
@@ -195,6 +242,133 @@ export async function requireCurrentFounder(): Promise<FounderProfile> {
   }
 
   return mapFounderProfileRow(data as FounderProfileRow);
+}
+
+export async function ensureCurrentFounderRoutingProfile(input?: {
+  productTag?: string;
+}): Promise<DodoRoutingMetadata> {
+  const founder = await requireCurrentFounder();
+  const admin = getSupabaseAdmin();
+  const workspaceId = buildFounderWorkspaceId(founder.userId);
+  const productTag = input?.productTag?.trim() || demoAllocationRule.productTag;
+  const ruleId = buildFounderRuleId(founder.userId, productTag);
+  const workspaceName = `${founder.fullName} Treasury Workspace`;
+
+  const { error: workspaceError } = await admin.from("workspaces").upsert(
+    {
+      id: workspaceId,
+      name: workspaceName,
+      owner_user_id: founder.userId,
+    },
+    { onConflict: "id" }
+  );
+
+  if (workspaceError) {
+    throw new Error(workspaceError.message);
+  }
+
+  const { error: membershipError } = await admin
+    .from("workspace_memberships")
+    .upsert(
+      {
+        workspace_id: workspaceId,
+        user_id: founder.userId,
+        role: "owner",
+      },
+      { onConflict: "workspace_id,user_id" }
+    );
+
+  if (membershipError) {
+    throw new Error(membershipError.message);
+  }
+
+  const rule: AllocationRule = {
+    ...demoAllocationRule,
+    id: ruleId,
+    workspaceId,
+    productTag,
+    createdByUserId: founder.userId,
+    updatedByUserId: founder.userId,
+  };
+
+  const { error: ruleError } = await admin
+    .from("allocation_rules")
+    .upsert(
+      {
+        id: rule.id,
+        workspace_id: rule.workspaceId,
+        merchant_id: rule.merchantId,
+        name: rule.name,
+        product_tag: rule.productTag,
+        currency: rule.currency,
+        daily_limit_cents: rule.dailyLimitCents,
+        enabled: rule.enabled,
+        buckets: rule.buckets,
+        created_by_user_id: rule.createdByUserId ?? null,
+        updated_by_user_id: rule.updatedByUserId ?? null,
+      },
+      { onConflict: "id" }
+    );
+
+  if (ruleError) {
+    throw new Error(ruleError.message);
+  }
+
+  return {
+    workspace_id: workspaceId,
+    merchant_id: rule.merchantId,
+    rule_id: rule.id,
+    product_tag: rule.productTag,
+  };
+}
+
+export async function provisionStandaloneRoutingProfile(input?: {
+  productTag?: string;
+  workspaceName?: string;
+}): Promise<DodoRoutingMetadata> {
+  const admin = getSupabaseAdmin();
+  const productTag = input?.productTag?.trim() || demoAllocationRule.productTag;
+  const workspaceId = buildAnonymousWorkspaceId();
+  const ruleId = buildAnonymousRuleId(productTag);
+  const workspaceName =
+    input?.workspaceName?.trim() || `AllocRail ${productTag.replace(/[-_]+/g, " ")} checkout`;
+
+  const { error: workspaceError } = await admin.from("workspaces").insert({
+    id: workspaceId,
+    name: workspaceName,
+    owner_user_id: null,
+  });
+
+  if (workspaceError) {
+    throw new Error(workspaceError.message);
+  }
+
+  const { error: ruleError } = await admin
+    .from("allocation_rules")
+    .insert({
+      id: ruleId,
+      workspace_id: workspaceId,
+      merchant_id: demoAllocationRule.merchantId,
+      name: demoAllocationRule.name,
+      product_tag: productTag,
+      currency: demoAllocationRule.currency,
+      daily_limit_cents: demoAllocationRule.dailyLimitCents,
+      enabled: demoAllocationRule.enabled,
+      buckets: demoAllocationRule.buckets,
+      created_by_user_id: null,
+      updated_by_user_id: null,
+    });
+
+  if (ruleError) {
+    throw new Error(ruleError.message);
+  }
+
+  return {
+    workspace_id: workspaceId,
+    merchant_id: demoAllocationRule.merchantId,
+    rule_id: ruleId,
+    product_tag: productTag,
+  };
 }
 
 export async function updateCurrentFounderProfile(

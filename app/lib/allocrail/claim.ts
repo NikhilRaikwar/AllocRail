@@ -55,8 +55,24 @@ async function ensureFounderWorkspaceAccess(args: {
     }
   }
 
+  if (existingWorkspace && !existingWorkspace.owner_user_id) {
+    const { error: claimOwnerError } = await admin
+      .from("workspaces")
+      .update({
+        owner_user_id: args.founder.userId,
+        name: existingWorkspace.name || args.workspaceName,
+      })
+      .eq("id", args.workspaceId);
+
+    if (claimOwnerError) {
+      throw new Error(claimOwnerError.message);
+    }
+  }
+
   const role =
-    !existingWorkspace || existingWorkspace.owner_user_id === args.founder.userId
+    !existingWorkspace ||
+    !existingWorkspace.owner_user_id ||
+    existingWorkspace.owner_user_id === args.founder.userId
       ? "owner"
       : "member";
 

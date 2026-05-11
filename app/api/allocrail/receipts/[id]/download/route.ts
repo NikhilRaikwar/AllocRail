@@ -1,5 +1,8 @@
 import { getReceiptById } from "@/app/lib/allocrail/event-store";
-import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
+import {
+  listCurrentFounderOwnedWorkspaceIds,
+  requireCurrentFounder,
+} from "@/app/lib/allocrail/founder";
 import { buildAllocRailReceiptHtml } from "@/app/lib/allocrail/receipt-template";
 
 export async function GET(
@@ -7,8 +10,9 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   await requireCurrentFounder();
+  const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
   const { id } = await context.params;
-  const receipt = await getReceiptById(id);
+  const receipt = await getReceiptById(id, { workspaceIds });
 
   if (!receipt) {
     return new Response("Receipt not found", { status: 404 });

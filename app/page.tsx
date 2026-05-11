@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckoutButton } from "./components/checkout-button";
 import { ClusterSelect } from "./components/cluster-select";
 import { ThemeToggle } from "./components/theme-toggle";
@@ -20,6 +20,7 @@ const checkoutMetadata: DodoRoutingMetadata = {
 };
 
 const navItems = [
+  { label: "Product", href: "#product" },
   { label: "How it works", href: "#how" },
   { label: "Who it's for", href: "#who" },
   { label: "Why Solana", href: "#compare" },
@@ -28,24 +29,24 @@ const navItems = [
 
 const proofCards = [
   {
-    value: "7",
-    title: "Payments routed",
-    copy: "Real devnet founder routes already captured from Dodo checkout and replayable for a judge demo.",
+    value: "Dodo live",
+    title: "Checkout + webhook",
+    copy: "Hosted checkout, verified webhook ingestion, and routing metadata already run end to end.",
   },
   {
-    value: "$36.10",
-    title: "USDC settled",
-    copy: "Treasury routes already prove contractor, founder, reserve, and agent distribution on Solana.",
+    value: "Rules",
+    title: "Founder-defined splits",
+    copy: "Each payment can expand into contractor, reserve, founder, and AI-agent treasury buckets.",
   },
   {
-    value: "4",
-    title: "Wallets funded",
-    copy: "Every payout route fans out into human treasury destinations instead of a single merchant balance.",
+    value: "Wallet-bound",
+    title: "Execution control",
+    copy: "Sensitive settlement stays tied to the founder wallet instead of an app-controlled signer.",
   },
   {
-    value: "1",
-    title: "Pilot founder flow",
-    copy: "Built for Indian SaaS founders paying global contractors without wire-fee drag or spreadsheet reconciliation.",
+    value: "Receipts",
+    title: "Audit surface",
+    copy: "Receipts tie the Dodo event, allocation rule, payout intents, and payout proof into one route view.",
   },
 ];
 
@@ -71,13 +72,6 @@ const allocationDisplayMeta: Record<string, string> = {
   agent_budget: "Programmatic AI operations budget",
 };
 
-const testimonial = {
-  quote:
-    "AllocRail would replace the spreadsheet we use to track contractor payouts after every international customer payment.",
-  author: "Beta founder interview",
-  role: "India-based AI SaaS operator",
-};
-
 const trustItems = [
   {
     title: "Founder auth",
@@ -95,29 +89,251 @@ const trustItems = [
 
 const features = [
   {
-    icon: "WV",
+    icon: "webhook",
+    sceneIndex: 0,
     title: "Verified Webhooks",
     copy: "Cryptographic signature verification via the Dodo SDK, replay protection, and webhook-id idempotency before any treasury action is created.",
   },
   {
-    icon: "PR",
+    icon: "rules",
+    sceneIndex: 1,
     title: "Programmable Rules",
     copy: "Basis-point allocation logic per Dodo product and event type, validated to exactly 10,000 bps before route generation.",
   },
   {
-    icon: "PI",
+    icon: "queue",
+    sceneIndex: 1,
     title: "Payout Intents",
     copy: "Each verified revenue event becomes structured payout intents with status, recipient wallet, and approval requirements.",
   },
   {
-    icon: "SU",
+    icon: "settlement",
+    sceneIndex: 2,
     title: "Stablecoin Settlement Path",
     copy: "The route is prepared for Solana USDC settlement so one payment can fan out into multiple treasury destinations cheaply.",
   },
   {
-    icon: "AR",
+    icon: "receipt",
+    sceneIndex: 3,
     title: "Audit Receipts",
     copy: "Every route snapshots the Dodo event, matched rule, recipient wallets, and payout amounts into one inspectable receipt record.",
+  },
+  {
+    icon: "shield",
+    sceneIndex: 2,
+    title: "Refund / dispute holds",
+    copy: "Quarantine and hold logic keep contested revenue from moving before it is safe to distribute.",
+  },
+];
+
+const dashboardFlowScenes = [
+  {
+    nav: "Events",
+    panelTag: "Dodo verified",
+    title: "Verified revenue event received",
+    body: "A hosted Dodo checkout completes, the signed webhook lands, and AllocRail stores the event in the founder revenue inbox.",
+    cta: "Webhook verified",
+    metrics: [
+      {
+        label: "Revenue inbox",
+        value: "payment.succeeded",
+        meta: "Payment event captured with checkout and payment references attached.",
+      },
+      {
+        label: "Routing metadata",
+        value: "workspace + rule",
+        meta: "workspace_id, merchant_id, rule_id, and product_tag resolve the treasury route.",
+      },
+      {
+        label: "Safety",
+        value: "Replay blocked",
+        meta: "Signature checks and webhook idempotency run before any treasury action is created.",
+      },
+      {
+        label: "Status",
+        value: "Inbox ready",
+        meta: "The founder can now inspect the matched event before payout logic begins.",
+      },
+    ],
+    rows: [
+      {
+        bucket: "Revenue event inbox",
+        status: "verified",
+        amount: "$111.38",
+        note: "Checkout session and payment reference attached",
+      },
+      {
+        bucket: "Rule resolver",
+        status: "matched",
+        amount: "AI split",
+        note: "Founder route resolved from Dodo metadata",
+      },
+    ],
+  },
+  {
+    nav: "Routes",
+    panelTag: "Rule matched",
+    title: "Treasury route expanded into payout intents",
+    body: "AllocRail turns the incoming revenue event into contractor, reserve, founder, and AI-agent payout intents with explicit control states.",
+    cta: "Queue prepared",
+    metrics: [
+      {
+        label: "Open routes",
+        value: "4 payout intents",
+        meta: "Each bucket gets its own amount, status, wallet, and receipt linkage.",
+      },
+      {
+        label: "Pending approvals",
+        value: "2 buckets",
+        meta: "Contractor and AI-agent routes wait for founder approval.",
+      },
+      {
+        label: "Auto-eligible",
+        value: "2 buckets",
+        meta: "Founder share and reserve routes are ready once execution begins.",
+      },
+      {
+        label: "Receipt draft",
+        value: "Created",
+        meta: "The route already has a linked receipt shell before on-chain settlement.",
+      },
+    ],
+    rows: [
+      {
+        bucket: "Contractor escrow",
+        status: "pending approval",
+        amount: "$50.12",
+        note: "Founder approval required",
+      },
+      {
+        bucket: "Founder share",
+        status: "ready",
+        amount: "$33.41",
+        note: "Auto-eligible on execution",
+      },
+      {
+        bucket: "Tax reserve",
+        status: "ready",
+        amount: "$16.70",
+        note: "Reserve bucket queued",
+      },
+      {
+        bucket: "AI-agent budget",
+        status: "pending approval",
+        amount: "$11.14",
+        note: "Budget route awaiting founder review",
+      },
+    ],
+  },
+  {
+    nav: "Routes",
+    panelTag: "Founder approved",
+    title: "Founder reviews sensitive payout buckets",
+    body: "Approval-required intents move from pending to approved before any wallet-signed settlement can begin.",
+    cta: "Approval granted",
+    metrics: [
+      {
+        label: "Pending approvals",
+        value: "0 remaining",
+        meta: "Sensitive buckets are explicitly approved in the founder queue.",
+      },
+      {
+        label: "Execution state",
+        value: "Ready to sign",
+        meta: "The route is now eligible for wallet-bound settlement.",
+      },
+      {
+        label: "Guardrails",
+        value: "Founder-controlled",
+        meta: "Nothing moves until the bound treasury operator wallet signs.",
+      },
+      {
+        label: "Receipt state",
+        value: "Awaiting proof",
+        meta: "The receipt is ready to attach the Solana transaction once confirmed.",
+      },
+    ],
+    rows: [
+      {
+        bucket: "Contractor escrow",
+        status: "approved",
+        amount: "$50.12",
+        note: "Founder approval recorded",
+      },
+      {
+        bucket: "Founder share",
+        status: "ready",
+        amount: "$33.41",
+        note: "Auto-eligible on execution",
+      },
+      {
+        bucket: "Tax reserve",
+        status: "ready",
+        amount: "$16.70",
+        note: "Reserve bucket queued",
+      },
+      {
+        bucket: "AI-agent budget",
+        status: "approved",
+        amount: "$11.14",
+        note: "Budget route approved by founder",
+      },
+    ],
+  },
+  {
+    nav: "Receipts",
+    panelTag: "Solana signed",
+    title: "Wallet-bound execution settles the route",
+    body: "The founder wallet signs the route, Solana USDC settlement fans out to multiple recipients, and proof is attached back to the route.",
+    cta: "Settlement submitted",
+    metrics: [
+      {
+        label: "Settlement rail",
+        value: "Solana USDC",
+        meta: "Multi-recipient route prepared and signed from the founder-bound wallet.",
+      },
+      {
+        label: "Execution proof",
+        value: "Signature linked",
+        meta: "Explorer reference and cluster details attach back to the route.",
+      },
+      {
+        label: "Recipient state",
+        value: "4 destinations",
+        meta: "Each bucket can settle without moving through bank-style manual ops.",
+      },
+      {
+        label: "Receipt status",
+        value: "Audit-ready",
+        meta: "Revenue source, rule match, and payout proof now live together.",
+      },
+    ],
+    rows: [
+      {
+        bucket: "Contractor escrow",
+        status: "confirmed",
+        amount: "$50.12",
+        note: "Wallet-signed USDC route confirmed",
+      },
+      {
+        bucket: "Founder share",
+        status: "confirmed",
+        amount: "$33.41",
+        note: "Founder treasury route confirmed",
+      },
+      {
+        bucket: "Tax reserve",
+        status: "confirmed",
+        amount: "$16.70",
+        note: "Reserve bucket confirmed",
+      },
+      {
+        bucket: "AI-agent budget",
+        status: "confirmed",
+        amount: "$11.14",
+        note: "Agent budget route confirmed",
+      },
+    ],
   },
 ];
 
@@ -163,8 +379,142 @@ function formatShortId(value?: string) {
   return `${value.slice(0, 8)}...${value.slice(-4)}`;
 }
 
+function FeatureIcon({ kind }: { kind: string }) {
+  const stroke = "currentColor";
+
+  switch (kind) {
+    case "webhook":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 7a5 5 0 0 1 8 4v1" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M16 17a5 5 0 0 1-8-4v-1" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M15 5h3v3" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 19H6v-3" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "rules":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 7h12" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M6 12h8" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M6 17h10" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="18" cy="12" r="2" stroke={stroke} strokeWidth="1.8" />
+        </svg>
+      );
+    case "queue":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="4" rx="1.5" stroke={stroke} strokeWidth="1.8" />
+          <rect x="5" y="10" width="14" height="4" rx="1.5" stroke={stroke} strokeWidth="1.8" />
+          <rect x="5" y="15" width="14" height="4" rx="1.5" stroke={stroke} strokeWidth="1.8" />
+        </svg>
+      );
+    case "settlement":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h14" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M14 7l5 5-5 5" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M10 17l-5-5 5-5" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "receipt":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 5h8l3 3v11l-2-1-2 1-2-1-2 1-2-1-2 1V5z" stroke={stroke} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M9 10h6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M9 14h6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4l7 3v5c0 4.5-2.9 7.5-7 8-4.1-.5-7-3.5-7-8V7l7-3z" stroke={stroke} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M9.5 12l1.7 1.7L14.8 10" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function getRouteBadgeClass(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized.includes("pending")) {
+    return "pending";
+  }
+
+  if (normalized.includes("ready")) {
+    return "ready";
+  }
+
+  if (normalized.includes("verified")) {
+    return "verified";
+  }
+
+  if (normalized.includes("matched")) {
+    return "matched";
+  }
+
+  if (normalized.includes("approved")) {
+    return "approved";
+  }
+
+  if (normalized.includes("confirmed")) {
+    return "confirmed";
+  }
+
+  return "";
+}
+
+function DashboardNavIcon({ label }: { label: string }) {
+  const stroke = "currentColor";
+
+  switch (label) {
+    case "Overview":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 12.5 12 5l8 7.5" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7 10.5V19h10v-8.5" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "Events":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 8h12M6 12h12M6 16h8" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <rect x="4" y="5" width="16" height="14" rx="3" stroke={stroke} strokeWidth="1.8" />
+        </svg>
+      );
+    case "Routes":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M7 6h4v4H7zM13 14h4v4h-4z" stroke={stroke} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M11 8h3a3 3 0 0 1 3 3v3" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case "Receipts":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 5h8l3 3v11l-2-1.5L15 19l-3-1.5L9 19l-2-1.5L5 19V5h3Z" stroke={stroke} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M9 10h6M9 13h6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case "Rules":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M7 7h10M7 12h7M7 17h4" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="16.5" cy="12" r="2.5" stroke={stroke} strokeWidth="1.8" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 export default function Home() {
   const [amount, setAmount] = useState(11138);
+  const [dashboardSceneIndex, setDashboardSceneIndex] = useState(0);
+  const [activeRouteRowIndex, setActiveRouteRowIndex] = useState(0);
   const [terminalLines, setTerminalLines] = useState<string[]>([
     "Waiting for live checkout...",
     "Click launch demo treasury to create a Dodo test checkout.",
@@ -188,10 +538,38 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setDashboardSceneIndex((current) => (current + 1) % dashboardFlowScenes.length);
+    }, 3200);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   const allocationPreview = demoAllocationRule.buckets.map((bucket) => ({
     ...bucket,
     amount: Math.round(amount * (bucket.percentageBps / 10_000)),
   }));
+  const dashboardScene = useMemo(
+    () => dashboardFlowScenes[dashboardSceneIndex],
+    [dashboardSceneIndex]
+  );
+
+  useEffect(() => {
+    setActiveRouteRowIndex(0);
+  }, [dashboardSceneIndex]);
+
+  useEffect(() => {
+    if (dashboardScene.rows.length <= 1) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setActiveRouteRowIndex((current) => (current + 1) % dashboardScene.rows.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [dashboardScene]);
 
   function runSimulation() {
     const paymentId = `pay_${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
@@ -1060,18 +1438,30 @@ export default function Home() {
           box-shadow: var(--shadow-sm);
         }
 
-        .cream-feature-card {
-          padding: 32px 28px;
-          transition: background 0.2s;
-        }
+          .cream-feature-card {
+            padding: 32px 28px;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            background: var(--surface);
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+          }
 
-        .cream-feature-card:hover {
-          background: var(--cream);
-        }
+          .cream-feature-card:hover,
+          .cream-feature-card:focus-visible,
+          .cream-feature-card.active {
+            background: var(--cream);
+            box-shadow: inset 0 0 0 1px rgba(26, 107, 74, 0.18);
+          }
 
-        .dark .cream-feature-card:hover {
-          background: var(--cream-darker);
-        }
+          .dark .cream-feature-card:hover,
+          .dark .cream-feature-card:focus-visible,
+          .dark .cream-feature-card.active {
+            background: var(--cream-darker);
+          }
 
         .cream-feature-icon,
         .cream-stack-emoji {
@@ -1084,18 +1474,444 @@ export default function Home() {
           width: 40px;
           height: 40px;
           border-radius: 10px;
-          font-size: 12px;
           margin-bottom: 18px;
           border: 1px solid var(--border);
           background: var(--cream);
-          font-family: var(--mono);
-          font-weight: 700;
-          letter-spacing: 0.06em;
+          color: var(--ink);
+        }
+
+        .cream-feature-icon svg {
+          width: 18px;
+          height: 18px;
         }
 
         .cream-feature-card h3 {
           font-size: 17px;
           margin-bottom: 10px;
+        }
+
+          .cream-dashboard-shell {
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--surface-strong);
+            box-shadow: var(--shadow-lg);
+            margin-top: 56px;
+            width: 100%;
+          }
+
+        .cream-dashboard-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 18px 24px;
+          border-bottom: 1px solid var(--border);
+          background: rgba(255, 255, 255, 0.65);
+        }
+
+        .cream-dashboard-brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-family: var(--serif);
+          font-size: 24px;
+          font-style: italic;
+          letter-spacing: -0.03em;
+        }
+
+        .cream-dashboard-brand-mark {
+          width: 14px;
+          height: 14px;
+          border-radius: 999px;
+          background: var(--green);
+          box-shadow: 0 0 0 6px rgba(26, 107, 74, 0.12);
+        }
+
+        .cream-dashboard-topbar-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .cream-dashboard-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 34px;
+          padding: 0 12px;
+          border-radius: 999px;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          font-family: var(--mono);
+          font-size: 11px;
+          color: var(--ink-muted);
+          letter-spacing: 0.02em;
+        }
+
+        .cream-dashboard-chip.primary {
+          background: var(--ink);
+          color: var(--cream);
+          border-color: var(--ink);
+        }
+
+          .cream-dashboard-body {
+            display: grid;
+            grid-template-columns: 78px minmax(0, 1fr);
+            min-height: 620px;
+          }
+
+          .cream-dashboard-sidebar {
+            border-right: 1px solid var(--border);
+            padding: 18px 10px;
+            background: linear-gradient(180deg, rgba(239, 231, 219, 0.55), rgba(255, 253, 250, 0.7));
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .cream-dashboard-navitem {
+            border-radius: 16px;
+            border: 1px solid transparent;
+            padding: 10px 6px;
+            min-height: 72px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--ink-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-align: center;
+          }
+
+        .cream-dashboard-navitem.active {
+          color: var(--green);
+          border-color: rgba(26, 107, 74, 0.18);
+          background: rgba(26, 107, 74, 0.08);
+        }
+
+          .cream-dashboard-navitem.live {
+            position: relative;
+            color: var(--ink);
+            border-color: rgba(26, 23, 20, 0.08);
+          }
+
+          .cream-dashboard-navitem.live::after {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(26, 107, 74, 0.08);
+          }
+
+          .cream-dashboard-navicon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--ink-soft);
+          }
+
+          .cream-dashboard-navicon svg {
+            width: 16px;
+            height: 16px;
+          }
+
+        .cream-dashboard-main {
+          padding: 22px 24px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .cream-dashboard-header {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 18px;
+          flex-wrap: wrap;
+        }
+
+          .cream-dashboard-heading {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 128px;
+          }
+
+        .cream-dashboard-heading h3 {
+          margin: 0;
+          font-family: var(--serif);
+          font-size: clamp(28px, 3vw, 38px);
+          line-height: 0.96;
+          letter-spacing: -0.05em;
+        }
+
+        .cream-dashboard-heading p {
+          margin: 0;
+          max-width: 520px;
+          font-size: 15px;
+          line-height: 1.65;
+          color: var(--ink-muted);
+        }
+
+        .cream-dashboard-header-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+          .cream-dashboard-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            align-items: stretch;
+          }
+
+        .cream-dashboard-metric {
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          background: var(--surface);
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          min-height: 150px;
+        }
+
+        .cream-dashboard-metric-label {
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--ink-faint);
+        }
+
+        .cream-dashboard-metric-value {
+          font-family: var(--serif);
+          font-size: clamp(22px, 2.2vw, 30px);
+          line-height: 1;
+          letter-spacing: -0.05em;
+        }
+
+        .cream-dashboard-metric p {
+          margin: 0;
+          font-size: 14px;
+          line-height: 1.6;
+          color: var(--ink-muted);
+        }
+
+          .cream-dashboard-panel {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            overflow: hidden;
+            min-height: 320px;
+          }
+
+          .cream-dashboard-shell,
+          .cream-dashboard-metric,
+          .cream-route-row,
+          .cream-dashboard-panel-tag,
+          .cream-route-badge {
+            transition:
+              background-color 0.28s ease,
+              border-color 0.28s ease,
+              box-shadow 0.28s ease,
+              color 0.28s ease,
+              opacity 0.28s ease,
+              transform 0.28s ease;
+          }
+
+        .cream-dashboard-panel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 16px 18px;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .cream-dashboard-panel-title {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .cream-dashboard-panel-title h4 {
+          margin: 0;
+          font-size: 18px;
+          line-height: 1.1;
+        }
+
+        .cream-dashboard-panel-title p {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--ink-muted);
+        }
+
+        .cream-dashboard-panel-tag {
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--green);
+          border: 1px solid rgba(26, 107, 74, 0.18);
+          background: rgba(26, 107, 74, 0.08);
+          border-radius: 999px;
+          padding: 8px 10px;
+        }
+
+          .cream-route-table {
+            display: grid;
+            min-height: 250px;
+          }
+
+          .cream-route-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
+            gap: 16px;
+            padding: 16px 18px;
+            border-top: 1px solid var(--border);
+            align-items: center;
+            position: relative;
+          }
+
+          .cream-route-row:first-child {
+            border-top: none;
+          }
+
+          .cream-route-row:hover,
+          .cream-route-row.active {
+            background: rgba(26, 107, 74, 0.04);
+          }
+
+          .cream-route-row.active::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            bottom: 12px;
+            width: 3px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(26, 107, 74, 0.15), var(--green), rgba(26, 107, 74, 0.15));
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .cream-dashboard-shell,
+            .cream-dashboard-metric,
+            .cream-route-row,
+            .cream-dashboard-panel-tag,
+            .cream-route-badge,
+            .cream-feature-card {
+              transition: none;
+            }
+          }
+
+          @media (max-width: 1200px) {
+            .cream-dashboard-body {
+              min-height: 0;
+            }
+
+            .cream-dashboard-heading {
+              min-height: 0;
+            }
+
+            .cream-dashboard-main {
+              padding: 20px;
+            }
+          }
+
+          .cream-route-bucket {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .cream-route-bucket strong {
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--ink);
+        }
+
+        .cream-route-bucket span,
+        .cream-route-status small {
+          font-size: 12px;
+          line-height: 1.5;
+          color: var(--ink-muted);
+        }
+
+        .cream-route-status {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .cream-route-badge {
+          display: inline-flex;
+          width: fit-content;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-family: var(--mono);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          border: 1px solid var(--border);
+          color: var(--ink-soft);
+          background: var(--surface-strong);
+        }
+
+        .cream-route-badge.pending {
+          color: var(--amber);
+          border-color: rgba(155, 110, 26, 0.18);
+          background: rgba(245, 237, 212, 0.8);
+        }
+
+        .cream-route-badge.ready {
+          color: var(--green);
+          border-color: rgba(26, 107, 74, 0.18);
+          background: rgba(212, 234, 224, 0.6);
+        }
+
+        .cream-route-badge.verified,
+        .cream-route-badge.matched {
+          color: #3b6bb4;
+          border-color: rgba(59, 107, 180, 0.18);
+          background: rgba(234, 240, 248, 0.9);
+        }
+
+        .cream-route-badge.approved {
+          color: var(--purple);
+          border-color: rgba(91, 63, 166, 0.18);
+          background: rgba(234, 228, 245, 0.9);
+        }
+
+        .cream-route-badge.confirmed {
+          color: var(--green);
+          border-color: rgba(26, 107, 74, 0.18);
+          background: rgba(212, 234, 224, 0.9);
+        }
+
+        .cream-route-amount {
+          font-family: var(--serif);
+          font-size: 22px;
+          line-height: 1;
+          letter-spacing: -0.04em;
+          justify-self: end;
         }
 
         .cream-demo-layout {
@@ -1472,7 +2288,8 @@ export default function Home() {
           }
 
           .cream-how-layout,
-          .cream-demo-layout {
+          .cream-demo-layout,
+          .cream-dashboard-body {
             grid-template-columns: 1fr;
           }
 
@@ -1488,6 +2305,36 @@ export default function Home() {
 
           .cream-hero-stats {
             grid-template-columns: 1fr 1fr;
+          }
+
+            .cream-dashboard-sidebar {
+              flex-direction: row;
+              overflow-x: auto;
+              border-right: none;
+              border-bottom: 1px solid var(--border);
+            }
+
+              .cream-dashboard-navitem {
+                min-width: 120px;
+                min-height: 64px;
+              }
+
+            .cream-dashboard-topbar-right {
+              width: 100%;
+              justify-content: flex-start;
+            }
+
+            .cream-dashboard-metrics {
+              grid-template-columns: 1fr;
+            }
+
+          .cream-route-row {
+            grid-template-columns: 1fr;
+            justify-items: start;
+          }
+
+          .cream-route-amount {
+            justify-self: start;
           }
 
           .cream-demo-meta-row {
@@ -1534,6 +2381,28 @@ export default function Home() {
             min-width: 88px;
             font-size: 24px;
           }
+
+          .cream-dashboard-topbar,
+          .cream-dashboard-main {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .cream-dashboard-topbar {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+            .cream-dashboard-topbar-right,
+            .cream-dashboard-header-actions {
+              justify-content: flex-start;
+            }
+
+            .cream-dashboard-chip {
+              min-height: 32px;
+              padding: 0 10px;
+              font-size: 10px;
+            }
 
           .cream-demo-slider {
             flex-direction: column;
@@ -1644,6 +2513,109 @@ export default function Home() {
                 Quarantine and approval controls stop founders from routing
                 contested revenue before it is safe to distribute.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="cream-section" id="product">
+        <hr className="cream-section-divider" />
+        <div className="cream-section-inner">
+          <span className="cream-section-eyebrow cream-reveal">
+            {"Product preview"}
+          </span>
+          <h2 className="cream-section-title cream-reveal">
+            The founder dashboard is the <em>actual product surface.</em>
+          </h2>
+          <p className="cream-section-body cream-reveal">
+            AllocRail should look like treasury software, not a checkout wrapper.
+            Founders need one place to review revenue events, inspect route logic,
+            approve sensitive buckets, and confirm payout proof.
+          </p>
+
+          <div className="cream-dashboard-shell cream-reveal">
+            <div className="cream-dashboard-topbar">
+              <div className="cream-dashboard-brand">
+                <span className="cream-dashboard-brand-mark" />
+                <span>AllocRail</span>
+              </div>
+              <div className="cream-dashboard-topbar-right">
+                <span className="cream-dashboard-chip">Solana devnet</span>
+                <span className="cream-dashboard-chip">USDC routes</span>
+                <span className="cream-dashboard-chip primary">{dashboardScene.cta}</span>
+              </div>
+            </div>
+
+            <div className="cream-dashboard-body">
+                <div className="cream-dashboard-sidebar">
+                  {["Overview", "Events", "Routes", "Receipts", "Rules"].map((item) => (
+                    <div
+                      key={item}
+                      className={`cream-dashboard-navitem ${
+                        item === dashboardScene.nav ? "active live" : ""
+                      }`}
+                    >
+                      <span className="cream-dashboard-navicon">
+                        <DashboardNavIcon label={item} />
+                      </span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+              <div className="cream-dashboard-main">
+                <div className="cream-dashboard-header">
+                  <div className="cream-dashboard-heading">
+                    <h3>{dashboardScene.title}</h3>
+                    <p>{dashboardScene.body}</p>
+                  </div>
+                  <div className="cream-dashboard-header-actions">
+                    <span className="cream-dashboard-chip">Run demo payment</span>
+                    <span className="cream-dashboard-chip primary">{dashboardScene.panelTag}</span>
+                  </div>
+                </div>
+
+                <div className="cream-dashboard-metrics">
+                  {dashboardScene.metrics.map((metric) => (
+                    <div className="cream-dashboard-metric" key={metric.label}>
+                      <span className="cream-dashboard-metric-label">{metric.label}</span>
+                      <span className="cream-dashboard-metric-value">{metric.value}</span>
+                      <p>{metric.meta}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="cream-dashboard-panel">
+                  <div className="cream-dashboard-panel-header">
+                    <div className="cream-dashboard-panel-title">
+                      <h4>Current route state</h4>
+                      <p>{dashboardScene.body}</p>
+                    </div>
+                    <span className="cream-dashboard-panel-tag">{dashboardScene.panelTag}</span>
+                  </div>
+
+                    <div className="cream-route-table">
+                      {dashboardScene.rows.map((row, index) => (
+                        <div
+                          className={`cream-route-row ${index === activeRouteRowIndex ? "active" : ""}`}
+                          key={row.bucket}
+                        >
+                          <div className="cream-route-bucket">
+                            <strong>{row.bucket}</strong>
+                            <span>{row.note}</span>
+                          </div>
+                          <div className="cream-route-status">
+                            <span className={`cream-route-badge ${getRouteBadgeClass(row.status)}`}>
+                              {row.status}
+                            </span>
+                            <small>Wallet-bound settlement path</small>
+                          </div>
+                          <div className="cream-route-amount">{row.amount}</div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1809,15 +2781,22 @@ export default function Home() {
             What AllocRail actually <em>does today.</em>
           </h2>
 
-          <div className="cream-features-grid cream-reveal">
-            {features.map((feature) => (
-              <div className="cream-feature-card" key={feature.title}>
-                <div className="cream-feature-icon">{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.copy}</p>
-              </div>
-            ))}
-          </div>
+            <div className="cream-features-grid cream-reveal">
+              {features.map((feature) => (
+                <button
+                  type="button"
+                  className={`cream-feature-card ${feature.sceneIndex === dashboardSceneIndex ? "active" : ""}`}
+                  key={feature.title}
+                  onClick={() => setDashboardSceneIndex(feature.sceneIndex)}
+                >
+                  <div className="cream-feature-icon">
+                    <FeatureIcon kind={feature.icon} />
+                  </div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.copy}</p>
+                </button>
+              ))}
+            </div>
         </div>
       </section>
 
@@ -1854,16 +2833,29 @@ export default function Home() {
         <hr className="cream-section-divider" />
         <div className="cream-section-inner">
           <span className="cream-section-eyebrow cream-reveal">
-            {"Traction"}
+            {"Why it matters"}
           </span>
           <h2 className="cream-section-title cream-reveal">
-            Early founder validation for a <em>real workflow.</em>
+            Built around a workflow founders still <em>run manually.</em>
           </h2>
-          <div className="cream-quote-card cream-reveal">
-            <p className="cream-quote-text">"{testimonial.quote}"</p>
-            <div className="cream-quote-meta">
-              <span>{testimonial.author}</span>
-              <span>{testimonial.role}</span>
+          <div className="cream-proof-grid cream-reveal">
+            <div className="cream-proof-card cream-proof-card-wide">
+              <span className="cream-proof-value">After revenue lands</span>
+              <h3>Contractors, reserves, and founder payouts still leave the billing stack</h3>
+              <p>
+                The pain starts after checkout succeeds. Teams still reconcile
+                contractor payouts, reserves, and internal budgets across
+                spreadsheets, bank tools, and manual approval loops.
+              </p>
+            </div>
+            <div className="cream-proof-card">
+              <span className="cream-proof-value">AllocRail wedge</span>
+              <h3>Post-revenue treasury routing</h3>
+              <p>
+                Dodo already handles collection. AllocRail exists to turn that
+                verified revenue into controlled treasury movement with proof and
+                founder oversight.
+              </p>
             </div>
           </div>
         </div>

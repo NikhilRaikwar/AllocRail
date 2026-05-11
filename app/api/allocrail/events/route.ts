@@ -8,6 +8,10 @@ import {
   listRecentReceipts,
   listRecentRevenueEvents,
 } from "@/app/lib/allocrail/event-store";
+import {
+  listCurrentFounderOwnedWorkspaceIds,
+  requireCurrentFounder,
+} from "@/app/lib/allocrail/founder";
 import type { RevenueEvent } from "@/app/lib/allocrail/types";
 
 function escapeCsv(value: string | number | null | undefined) {
@@ -17,7 +21,8 @@ function escapeCsv(value: string | number | null | undefined) {
 }
 
 async function buildEventsCsv() {
-  const events = await listRecentRevenueEvents();
+  const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
+  const events = await listRecentRevenueEvents({ workspaceIds });
   const header = [
     "Event ID",
     "Event Type",
@@ -60,11 +65,13 @@ async function buildEventsCsv() {
 }
 
 export async function GET(req: NextRequest) {
+  await requireCurrentFounder();
+  const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
   const format = req.nextUrl.searchParams.get("format");
   const [events, payoutIntents, receipts] = await Promise.all([
-    listRecentRevenueEvents(),
-    listRecentPayoutIntents(),
-    listRecentReceipts(),
+    listRecentRevenueEvents({ workspaceIds }),
+    listRecentPayoutIntents({ workspaceIds }),
+    listRecentReceipts({ workspaceIds }),
   ]);
 
   if (format === "csv") {

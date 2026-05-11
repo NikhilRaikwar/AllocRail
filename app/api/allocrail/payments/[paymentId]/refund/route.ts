@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
+import {
+  listCurrentFounderOwnedWorkspaceIds,
+  requireCurrentFounder,
+} from "@/app/lib/allocrail/founder";
 import { holdRevenueEventSettlement } from "@/app/lib/allocrail/guardrails";
 import { requestDodoRefund } from "@/app/lib/allocrail/dodo";
-import { updateRevenueEventByPaymentId } from "@/app/lib/allocrail/event-store";
+import {
+  findRevenueEventByReference,
+  updateRevenueEventByPaymentId,
+} from "@/app/lib/allocrail/event-store";
 
 export async function POST(
   req: NextRequest,
@@ -10,6 +16,7 @@ export async function POST(
 ) {
   try {
     const founder = await requireCurrentFounder();
+    const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
     const { paymentId } = await context.params;
     const body = (await req.json().catch(() => ({}))) as {
       reason?: string;
@@ -19,6 +26,18 @@ export async function POST(
       typeof body.reason === "string" && body.reason.trim().length > 0
         ? body.reason.trim().slice(0, 3000)
         : `Founder-requested refund by ${founder.fullName}`;
+
+    const revenueEvent = await findRevenueEventByReference(
+      { paymentId },
+      { workspaceIds }
+    );
+
+    if (!revenueEvent) {
+      return NextResponse.json(
+        { error: "Payment not found in your founder workspace." },
+        { status: 404 }
+      );
+    }
 
     const refund = await requestDodoRefund({
       paymentId,
@@ -30,14 +49,14 @@ export async function POST(
       },
     });
 
-    await updateRevenueEventByPaymentId(paymentId, (event) => ({
+    const updatedEvent = await updateRevenueEventByPaymentId(paymentId, (event) => ({
       ...event,
       dodoRefundId: refund.refund_id,
       dodoRefundStatus: refund.status,
       refundReason: refund.reason ?? reason,
       refundRequestedAt: refund.created_at,
       refundedAt: refund.status === "succeeded" ? refund.created_at : event.refundedAt,
-    }));
+    }), { workspaceIds });
 
     const hold = await holdRevenueEventSettlement({
       paymentId,

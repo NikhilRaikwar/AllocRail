@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getReceiptById } from "@/app/lib/allocrail/event-store";
+import { listCurrentFounderOwnedWorkspaceIds } from "@/app/lib/allocrail/founder";
 import { buildAllocRailReceiptHtml } from "@/app/lib/allocrail/receipt-template";
 
 export default async function DashboardReceiptDetailPage({
@@ -8,7 +9,8 @@ export default async function DashboardReceiptDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const receipt = await getReceiptById(id);
+  const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
+  const receipt = await getReceiptById(id, { workspaceIds });
 
   if (!receipt) {
     notFound();

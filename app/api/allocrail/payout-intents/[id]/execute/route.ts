@@ -6,7 +6,10 @@ import {
   updatePayoutIntent,
 } from "@/app/lib/allocrail/event-store";
 import { getAppEnvironment } from "@/app/lib/allocrail/env";
-import { requireBoundFounderWallet } from "@/app/lib/allocrail/founder";
+import {
+  listCurrentFounderOwnedWorkspaceIds,
+  requireBoundFounderWallet,
+} from "@/app/lib/allocrail/founder";
 
 export const runtime = "nodejs";
 
@@ -130,8 +133,9 @@ export async function POST(
 ) {
   try {
     const founder = await requireBoundFounderWallet(req);
+    const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
     const { id } = await params;
-    const intent = await getPayoutIntentById(id);
+    const intent = await getPayoutIntentById(id, { workspaceIds });
     const body = (await req.json().catch(() => ({}))) as {
       action?: "prepare" | "confirm";
       signature?: string;
@@ -192,7 +196,7 @@ export async function POST(
       confirmedAt: new Date().toISOString(),
       failureReason: undefined,
       failedAt: undefined,
-    }));
+    }), { workspaceIds });
 
     return NextResponse.json({ ok: true, payoutIntent: updated });
   } catch (error) {
@@ -201,12 +205,13 @@ export async function POST(
     const { id } = await params;
 
     try {
+      const workspaceIds = await listCurrentFounderOwnedWorkspaceIds();
       const failed = await updatePayoutIntent(id, (current) => ({
         ...current,
         status: "failed",
         failedAt: new Date().toISOString(),
         failureReason: message,
-      }));
+      }), { workspaceIds });
 
       return NextResponse.json({ error: message, payoutIntent: failed }, { status: 500 });
     } catch {
