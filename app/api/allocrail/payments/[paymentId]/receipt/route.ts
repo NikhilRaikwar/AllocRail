@@ -1,11 +1,9 @@
-import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
 import { retrieveDodoPaymentReceipt } from "@/app/lib/allocrail/dodo";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ paymentId: string }> }
 ) {
-  await requireCurrentFounder();
   const { paymentId } = await context.params;
 
   const response = await retrieveDodoPaymentReceipt(paymentId);
