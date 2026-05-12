@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { PayoutIntentActions } from "@/app/components/payout-intent-actions";
 import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
@@ -11,6 +12,11 @@ import {
 } from "@/app/lib/allocrail/dashboard-data";
 import type { PayoutIntent } from "@/app/lib/allocrail/types";
 import styles from "@/app/dashboard/dashboard.module.css";
+
+export const metadata: Metadata = {
+  title: "Payout Intents",
+  description: "Review, approve, reject, and execute founder-controlled treasury payout intents before Solana settlement.",
+};
 
 function isOpenIntent(intent: PayoutIntent) {
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { RulesManager } from "@/app/components/rules-manager";
 import { listAllAllocationRules } from "@/app/lib/allocrail/event-store";
@@ -5,6 +6,11 @@ import {
   formatMoney,
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
+
+export const metadata: Metadata = {
+  title: "Allocation Rules",
+  description: "Define and edit founder treasury routing rules for contractor payouts, tax reserves, founder shares, and AI-agent budgets.",
+};
 
 export default async function DashboardRulesPage() {
   const rules = await listAllAllocationRules();

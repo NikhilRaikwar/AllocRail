@@ -1,9 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { claimRevenueRouteByReference } from "@/app/lib/allocrail/claim";
 import { formatMoney, shortId } from "@/app/lib/allocrail/dashboard-data";
 import { findRevenueEventByReference } from "@/app/lib/allocrail/event-store";
 import { getSupabaseServerClient } from "@/app/lib/supabase/server";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Checkout Success",
+  description: "Review a completed Dodo checkout, claim the routed treasury event, and continue into the founder dashboard.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function firstValue(
   params: Record<string, string | string[] | undefined>,

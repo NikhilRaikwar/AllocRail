@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { FounderProfileSettings } from "@/app/components/founder-profile-settings";
 import styles from "@/app/dashboard/dashboard.module.css";
 import { requireCurrentFounder } from "@/app/lib/allocrail/founder";
+
+export const metadata: Metadata = {
+  title: "Profile Settings",
+  description: "Manage founder profile details, treasury wallet binding, and FX configuration for AllocRail.",
+};
 
 export default async function DashboardSettingsPage() {
   const founder = await requireCurrentFounder();

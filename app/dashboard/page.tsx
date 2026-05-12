@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { TreasuryCopilotCard } from "@/app/components/treasury-copilot-card";
 import {
@@ -11,6 +12,11 @@ import {
   shortId,
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
+
+export const metadata: Metadata = {
+  title: "Overview",
+  description: "Overview of founder treasury activity, latest Dodo revenue events, payout progress, and receipt proof.",
+};
 
 export default async function DashboardOverviewPage() {
   const snapshot = await getDashboardSnapshot();

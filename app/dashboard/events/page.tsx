@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { RevenueEventActions } from "@/app/components/revenue-event-actions";
 import Link from "next/link";
@@ -13,6 +14,11 @@ import {
 } from "@/app/lib/allocrail/dashboard-data";
 import type { RevenueEvent } from "@/app/lib/allocrail/types";
 import styles from "@/app/dashboard/dashboard.module.css";
+
+export const metadata: Metadata = {
+  title: "Revenue Events",
+  description: "Inspect verified Dodo revenue events, routing metadata, and route summaries inside the founder revenue inbox.",
+};
 
 function getEventTagClass(event: RevenueEvent) {
   if (event.type.startsWith("subscription.")) {

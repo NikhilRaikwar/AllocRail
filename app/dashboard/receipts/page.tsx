@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import {
   formatMoney,
@@ -5,6 +6,11 @@ import {
   getDashboardSnapshot,
 } from "@/app/lib/allocrail/dashboard-data";
 import styles from "@/app/dashboard/dashboard.module.css";
+
+export const metadata: Metadata = {
+  title: "Receipts",
+  description: "Audit receipts linking Dodo payment events, allocation rules, payout intents, and Solana settlement proof.",
+};
 
 export default async function DashboardReceiptsPage() {
   const snapshot = await getDashboardSnapshot();
